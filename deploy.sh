@@ -6,12 +6,17 @@ DIR="/var/www/SOC2"
 
 echo "==> Deploying SOC2 Portal to $DIR"
 
+echo "==> Fixing repository ownership..."
+sudo chown -R "$USER":"$USER" "$DIR" 2>/dev/null || true
+git config --global --add safe.directory "$DIR" 2>/dev/null || true
+
 if [ -d "$DIR/.git" ]; then
   echo "==> Pulling latest changes..."
   cd "$DIR" && git pull
 else
   echo "==> Cloning repository..."
   sudo git clone "$REPO" "$DIR"
+  sudo chown -R "$USER":"$USER" "$DIR"
 fi
 
 echo "==> Setting permissions..."
