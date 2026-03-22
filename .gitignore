@@ -1,5 +1,6 @@
-# Deploy key — never commit the private key
+# Deploy keys — never commit
 .deploy_key
+.deploy_key.pub
 
 # Runtime data — keep structure, ignore contents
 uploads/*
