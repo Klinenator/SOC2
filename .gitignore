@@ -1,0 +1,12 @@
+# Deploy key — never commit the private key
+.deploy_key
+
+# Runtime data — keep structure, ignore contents
+uploads/*
+!uploads/.gitkeep
+data/tasks.json
+data/evidence.json
+
+# OS
+.DS_Store
+Thumbs.db

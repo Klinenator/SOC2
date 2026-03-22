@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tasks — SOC2 Readiness Portal</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#3b82f6"/><path d="M16 6l8 3v8c0 5-8 9-8 9s-8-4-8-9V9l8-3z" fill="white" opacity=".9"/><path d="M12 16l2.5 2.5L20 12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="sidebar-logo-text">SOC2 Portal</div><div class="sidebar-logo-sub">Audit Readiness</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div><div class="topbar-title">Remediation Tasks</div><div class="topbar-sub" id="tasks-subtitle">Track and manage compliance tasks</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openModal('task-modal'); resetTaskForm()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Task
+        </button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search" placeholder="Search tasks..." oninput="filterTasks()">
+        </div>
+        <select class="filter-select" id="filter-status" onchange="filterTasks()">
+          <option value="">All Statuses</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select>
+        <select class="filter-select" id="filter-priority" onchange="filterTasks()">
+          <option value="">All Priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select class="filter-select" id="filter-control" onchange="filterTasks()">
+          <option value="">All Controls</option>
+        </select>
+        <span id="tasks-count" style="color:var(--text-secondary);font-size:13px;margin-left:auto"></span>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Priority</th>
+                <th>Title</th>
+                <th>Control</th>
+                <th>Assignee</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tasks-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay hidden" id="task-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="task-modal-title">New Task</span>
+      <button class="modal-close" onclick="closeModal('task-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="task-id">
+      <div class="form-group">
+        <label class="form-label">Title <span>*</span></label>
+        <input class="form-control" id="task-title" type="text" placeholder="e.g., Implement MFA for admin accounts">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" id="task-desc" placeholder="Describe the remediation action..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Linked Control</label>
+          <select class="form-control" id="task-control">
+            <option value="">None</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assignee</label>
+          <input class="form-control" id="task-assignee" type="text" placeholder="Name or team">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-control" id="task-priority">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Due Date</label>
+          <input class="form-control" id="task-due" type="date">
+        </div>
+      </div>
+      <div class="form-group" id="task-status-group" style="display:none">
+        <label class="form-label">Status</label>
+        <select class="form-control" id="task-status">
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/tasks.js"></script>
+</body>
+</html>

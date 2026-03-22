@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controls — SOC2 Readiness Portal</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#3b82f6"/><path d="M16 6l8 3v8c0 5-8 9-8 9s-8-4-8-9V9l8-3z" fill="white" opacity=".9"/><path d="M12 16l2.5 2.5L20 12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="sidebar-logo-text">SOC2 Portal</div><div class="sidebar-logo-sub">Audit Readiness</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div><div class="topbar-title">Controls</div><div class="topbar-sub" id="controls-subtitle">Loading...</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search" placeholder="Search controls..." oninput="filterControls()">
+        </div>
+        <select class="filter-select" id="filter-category" onchange="filterControls()">
+          <option value="">All Categories</option>
+          <option value="CC1">CC1 — Control Environment</option>
+          <option value="CC2">CC2 — Communication</option>
+          <option value="CC3">CC3 — Risk Assessment</option>
+          <option value="CC4">CC4 — Monitoring</option>
+          <option value="CC5">CC5 — Control Activities</option>
+          <option value="CC6">CC6 — Logical &amp; Physical Access</option>
+          <option value="CC7">CC7 — System Operations</option>
+          <option value="CC8">CC8 — Change Management</option>
+          <option value="CC9">CC9 — Risk Mitigation</option>
+          <option value="C1">C1 — Confidentiality</option>
+        </select>
+        <select class="filter-select" id="filter-status" onchange="filterControls()">
+          <option value="">All Statuses</option>
+          <option value="not_started">Not Started</option>
+          <option value="in_progress">In Progress</option>
+          <option value="compliant">Compliant</option>
+          <option value="gap">Gap</option>
+        </select>
+        <span id="controls-count" style="color:var(--text-secondary);font-size:13px;margin-left:auto"></span>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Control Name</th>
+                <th>Status</th>
+                <th>Owner</th>
+                <th>Due Date</th>
+                <th>Evidence</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="controls-tbody">
+              <tr><td colspan="8" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="edit-modal-title">Edit Control</span>
+      <button class="modal-close" onclick="closeModal('edit-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--slate-50);border-radius:var(--radius);padding:14px;margin-bottom:20px">
+        <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:4px" id="edit-control-id"></div>
+        <div style="font-size:14px;font-weight:600;color:var(--text-primary)" id="edit-control-name"></div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:6px;line-height:1.5" id="edit-control-desc"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status <span>*</span></label>
+        <select class="form-control" id="edit-status">
+          <option value="not_started">Not Started</option>
+          <option value="in_progress">In Progress</option>
+          <option value="compliant">Compliant</option>
+          <option value="gap">Gap</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input class="form-control" id="edit-owner" type="text" placeholder="Name or team">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Due Date</label>
+          <input class="form-control" id="edit-due" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="edit-notes" placeholder="Implementation notes, gaps, action items..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveControl()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/controls.js"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Policies — SOC2 Readiness Portal</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#3b82f6"/><path d="M16 6l8 3v8c0 5-8 9-8 9s-8-4-8-9V9l8-3z" fill="white" opacity=".9"/><path d="M12 16l2.5 2.5L20 12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="sidebar-logo-text">SOC2 Portal</div><div class="sidebar-logo-sub">Audit Readiness</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div><div class="topbar-title">Policies</div><div class="topbar-sub" id="policies-subtitle">Manage your compliance policy library</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="newPolicy()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Policy
+        </button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="alert alert-info">
+        <strong>Policy library pre-loaded with 10 templates.</strong> Add your organization's specific policy content using the Edit button. Policies must be Approved before your audit.
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search" placeholder="Search policies..." oninput="filterPolicies()">
+        </div>
+        <select class="filter-select" id="filter-status" onchange="filterPolicies()">
+          <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="under_review">Under Review</option>
+          <option value="approved">Approved</option>
+        </select>
+        <select class="filter-select" id="filter-category" onchange="filterPolicies()">
+          <option value="">All Categories</option>
+          <option value="Security">Security</option>
+          <option value="Access Management">Access Management</option>
+          <option value="Operations">Operations</option>
+          <option value="Confidentiality">Confidentiality</option>
+          <option value="Risk Management">Risk Management</option>
+          <option value="Availability">Availability</option>
+        </select>
+        <span id="policies-count" style="color:var(--text-secondary);font-size:13px;margin-left:auto"></span>
+      </div>
+
+      <!-- Summary cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+        <div class="stat-card"><div class="stat-icon" style="background:var(--slate-50);color:var(--navy-600)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="stat-value" id="stat-draft">—</div><div class="stat-label">Draft</div></div></div>
+        <div class="stat-card"><div class="stat-icon yellow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="stat-value" id="stat-review">—</div><div class="stat-label">Under Review</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="stat-value" id="stat-approved">—</div><div class="stat-label">Approved</div></div></div>
+      </div>
+
+      <div class="policy-grid" id="policy-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:40px"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Policy Modal -->
+<div class="modal-overlay hidden" id="policy-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <span class="modal-title" id="policy-modal-title">Add Policy</span>
+      <button class="modal-close" onclick="closeModal('policy-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="policy-id">
+      <div class="form-group">
+        <label class="form-label">Policy Name <span>*</span></label>
+        <input class="form-control" id="policy-name" type="text" placeholder="e.g., Information Security Policy">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-control" id="policy-category">
+            <option>Security</option>
+            <option>Access Management</option>
+            <option>Operations</option>
+            <option>Confidentiality</option>
+            <option>Risk Management</option>
+            <option>Availability</option>
+            <option>General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="policy-status">
+            <option value="draft">Draft</option>
+            <option value="under_review">Under Review</option>
+            <option value="approved">Approved</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <input class="form-control" id="policy-owner" type="text" placeholder="Name or team">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Version</label>
+          <input class="form-control" id="policy-version" type="text" placeholder="1.0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Review Date</label>
+        <input class="form-control" id="policy-review" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-control" id="policy-desc" type="text" placeholder="Brief summary of this policy's scope">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Policy Content</label>
+        <textarea class="form-control" id="policy-content" style="min-height:180px" placeholder="Paste or type the full policy text here. You can add this later."></textarea>
+        <div class="form-hint">Full policy text. You can leave this blank and add it when your policies are ready.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('policy-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePolicy()">Save Policy</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/policies.js"></script>
+</body>
+</html>

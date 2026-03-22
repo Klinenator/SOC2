@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidence — SOC2 Readiness Portal</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#3b82f6"/><path d="M16 6l8 3v8c0 5-8 9-8 9s-8-4-8-9V9l8-3z" fill="white" opacity=".9"/><path d="M12 16l2.5 2.5L20 12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="sidebar-logo-text">SOC2 Portal</div><div class="sidebar-logo-sub">Audit Readiness</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div><div class="topbar-title">Evidence</div><div class="topbar-sub" id="evidence-subtitle">Manage audit evidence files</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openModal('upload-modal')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Upload Evidence
+        </button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="alert alert-info" style="margin-bottom:20px">
+        Upload evidence files (PDFs, screenshots, exports) and link them to specific controls. Supported: PDF, PNG, JPG, DOCX, XLSX, CSV, TXT, ZIP (max 50MB).
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search" placeholder="Search evidence..." oninput="filterEvidence()">
+        </div>
+        <select class="filter-select" id="filter-control" onchange="filterEvidence()">
+          <option value="">All Controls</option>
+        </select>
+        <span id="evidence-count" style="color:var(--text-secondary);font-size:13px;margin-left:auto"></span>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Description</th>
+                <th>Linked Controls</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="evidence-tbody">
+              <tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay hidden" id="upload-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Upload Evidence</span>
+      <button class="modal-close" onclick="closeModal('upload-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('upload-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p><strong>Click to browse</strong> or drag &amp; drop</p>
+          <p style="margin-top:6px;font-size:12px">PDF, PNG, JPG, DOCX, XLSX, CSV, TXT, ZIP — max 50MB</p>
+          <p id="selected-file-name" style="margin-top:10px;font-weight:600;color:var(--blue-500)"></p>
+        </div>
+        <input type="file" id="upload-input" onchange="handleFileSelect(event)" accept=".pdf,.png,.jpg,.jpeg,.gif,.docx,.xlsx,.csv,.txt,.zip">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-control" id="upload-desc" type="text" placeholder="e.g., Q1 2026 Access Review Screenshot">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link to Controls</label>
+        <div id="control-checkboxes" style="max-height:200px;overflow-y:auto;border:1px solid var(--slate-300);border-radius:var(--radius);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px"></div>
+        <div class="form-hint">Select one or more controls this evidence supports</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('upload-modal')">Cancel</button>
+      <button class="btn btn-primary" id="upload-btn" onclick="uploadEvidence()">Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay hidden" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Evidence</span>
+      <button class="modal-close" onclick="closeModal('edit-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-control" id="edit-desc" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Linked Controls</label>
+        <div id="edit-control-checkboxes" style="max-height:200px;overflow-y:auto;border:1px solid var(--slate-300);border-radius:var(--radius);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvidence()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/evidence.js"></script>
+</body>
+</html>
