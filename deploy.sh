@@ -22,6 +22,9 @@ echo "==> Installing nginx config..."
 sudo cp "$DIR/nginx.conf" /etc/nginx/sites-available/soc2
 sudo ln -sf /etc/nginx/sites-available/soc2 /etc/nginx/sites-enabled/soc2
 
+echo "==> Disabling default nginx site..."
+sudo rm -f /etc/nginx/sites-enabled/default
+
 echo "==> Testing nginx config..."
 sudo nginx -t
 
