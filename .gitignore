@@ -5,7 +5,6 @@
 # Runtime data — keep structure, ignore contents
 uploads/*
 !uploads/.gitkeep
-data/tasks.json
 data/evidence.json
 
 # OS

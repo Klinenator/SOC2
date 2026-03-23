@@ -1,0 +1,233 @@
+[
+  {
+    "id": "bf66a4e1-9387",
+    "title": "Schedule penetration test within audit window",
+    "description": "Previous pen test (Apr 22\u2013May 2, 2024) ran BEFORE the audit period started. Must schedule this year's test to fall inside the audit window.",
+    "controlId": "CC7.1",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-04-06",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "8da653d5-a6b9",
+    "title": "Complete annual Governance / IS Policy review",
+    "description": "Last review was Mar 6, 2024 \u2014 before the audit period. Must be completed and documented within the audit window this year.",
+    "controlId": "CC5.3",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-04-06",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "8803501c-3d4a",
+    "title": "Implement onboarding ticket workflow for new hires",
+    "description": "Onboarding controls (CC1.1, CC1.4, CC2.2, CC6.2, C1.1) were untested because no hires occurred during review period. Ensure every hire/contractor generates a documented ticket: signed handbook, signed policies, background check, access provisioned within 1 week.",
+    "controlId": "CC6.2",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-04-13",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "c1e3e4a9-6bb0",
+    "title": "Implement termination checklist workflow",
+    "description": "Offboarding controls (CC6.2, C1.2) were untested. Every termination must produce a completed checklist: IT ticket for access revocation, HR notification, physical access removed within defined timeframe.",
+    "controlId": "C1.2",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-04-13",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "688c9c50-a3ba",
+    "title": "Ensure all changes are logged in ticket system",
+    "description": "CC8.1 was untested because no system changes were recorded. All infrastructure, code, and config changes must be submitted via Change Request form and tracked in ticket system with management approval.",
+    "controlId": "CC8.1",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-03-30",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "062ac298-704e",
+    "title": "Require all employees to sign current policies",
+    "description": "All staff must sign the full policy pack at the start of the audit period and whenever policies are updated. Use the portal's Sign workflow to capture signatures.",
+    "controlId": "CC2.2",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-04-06",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "255a43db-a67c",
+    "title": "Complete annual risk assessment",
+    "description": "Document vulnerabilities, threats, fraud risk, vendor cloud risks. Rate all risks using risk evaluation process. Update risk register with mitigation strategies. Required for CC3.1\u2013CC3.4.",
+    "controlId": "CC3.2",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-04-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "09aca9fe-3823",
+    "title": "Complete annual user access role review",
+    "description": "Review all user access roles and privileges. Management must approve or update. Document the review. Required for CC6.3.",
+    "controlId": "CC6.3",
+    "assignee": "",
+    "priority": "high",
+    "status": "open",
+    "dueDate": "2026-05-07",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "1c208092-af64",
+    "title": "Review and test BCDR plan",
+    "description": "Review, revise, and test Business Continuity and Disaster Recovery plan annually. Document test results. Required for CC9.1.",
+    "controlId": "CC9.1",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-05-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "54767c59-9ac6",
+    "title": "Review asset / system inventory",
+    "description": "Confirm all physical devices, virtual devices, software, data flows, external systems, and organizational roles are listed and current. Required for CC3.2.",
+    "controlId": "CC3.2",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-05-07",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "80af7b8f-b0a6",
+    "title": "Review network diagram with management",
+    "description": "Engineering team must update and management must review and approve the network diagram annually. Required for C1.1.",
+    "controlId": "C1.1",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-05-07",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "8291cb1e-8f57",
+    "title": "Review AWS SOC 2 report and all vendor SOC 2 reports",
+    "description": "Management must review AWS annual SOC 2 report and any other key vendor reports to confirm outsourced controls are appropriately designed and operating effectively. Required for CC9.2.",
+    "controlId": "CC9.2",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-05-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "fabcee74-f10a",
+    "title": "Complete annual performance reviews for all employees",
+    "description": "Managers must complete performance reviews to ensure job roles and control responsibilities are being performed. Required for CC1.5.",
+    "controlId": "CC1.5",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-06-21",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "a50262bb-09e3",
+    "title": "Review all vendor contracts for compliance requirements",
+    "description": "Ensure all vendor contracts include: scope of services, roles & responsibilities, compliance requirements, and service levels. Required for CC9.2.",
+    "controlId": "CC9.2",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-05-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "9e422e83-65b0",
+    "title": "Q2 2026 \u2014 Security awareness training (all staff)",
+    "description": "All employees and contractors must complete security awareness training quarterly. Collect and retain completion records as audit evidence.",
+    "controlId": "CC2.2",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-04-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "a0d6e726-5a95",
+    "title": "Q2 2026 \u2014 Internal control self-evaluation",
+    "description": "Control owners perform quarterly self-evaluation of control effectiveness. Management reviews results. Document findings and any management actions. Required for CC4.1 and CC4.2.",
+    "controlId": "CC4.1",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-04-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "49f30c82-0f31",
+    "title": "Q2 2026 \u2014 Management operations review",
+    "description": "Conduct and document quarterly internal control review to ensure controls are functioning as expected. Review commitments and operational objectives. Required for CC3.1.",
+    "controlId": "CC3.1",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-04-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "3a52c320-7f54",
+    "title": "Q2 2026 \u2014 Update risk register",
+    "description": "Review and update risk register with any new threats, vulnerabilities, or changes to risk ratings. Document mitigation status for existing risks.",
+    "controlId": "CC3.2",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-04-22",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "fd5bcb1b-6e8b",
+    "title": "April 2026 \u2014 Network vulnerability scans (internal + external)",
+    "description": "Run and save monthly internal and external network vulnerability scan reports. Review critical findings and assign mitigation actions. Required for CC7.1.",
+    "controlId": "CC7.1",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-03-30",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "471a9e5f-7a7d",
+    "title": "April 2026 \u2014 Save monitoring dashboard screenshots",
+    "description": "Capture and retain screenshots of capacity monitoring, security event monitoring, latency, and network performance dashboards. Required for CC4.1 and CC7.2.",
+    "controlId": "CC4.1",
+    "assignee": "",
+    "priority": "low",
+    "status": "open",
+    "dueDate": "2026-03-30",
+    "createdAt": "2026-03-23"
+  },
+  {
+    "id": "a5f3c667-bc79",
+    "title": "April 2026 \u2014 Review and close open vulnerability findings",
+    "description": "Review assessment reports, confirm critical items have assigned owners, and track all items to resolution. Required for CC7.1.",
+    "controlId": "CC7.1",
+    "assignee": "",
+    "priority": "medium",
+    "status": "open",
+    "dueDate": "2026-04-06",
+    "createdAt": "2026-03-23"
+  }
+]
