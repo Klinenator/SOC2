@@ -4,6 +4,35 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Policies — SOC2 Readiness Portal</title>
 <link rel="stylesheet" href="/css/style.css">
+<style>
+.policy-content-body {
+  white-space: pre-wrap; font-size: 13px; line-height: 1.7;
+  color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  max-height: 420px; overflow-y: auto; background: var(--slate-50);
+  border: 1px solid var(--slate-200); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px;
+}
+.sig-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; background: var(--slate-50);
+  border-radius: var(--radius); margin-bottom: 6px;
+  font-size: 13px; border: 1px solid var(--slate-200);
+}
+.sig-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--blue-100); color: var(--blue-600);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; flex-shrink: 0;
+}
+.policy-card { cursor: default; }
+.sign-confirm {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--blue-50); border: 1px solid var(--blue-100);
+  border-radius: var(--radius); padding: 12px 14px; margin-top: 8px;
+}
+.sign-confirm input[type=checkbox] { margin-top: 2px; accent-color: var(--blue-500); }
+.modal { max-width: 720px; }
+</style>
 </head>
 <body>
 <div class="layout">
@@ -16,8 +45,12 @@
   </aside>
   <div class="main">
     <header class="topbar">
-      <div><div class="topbar-title">Policies</div><div class="topbar-sub" id="policies-subtitle">Manage your compliance policy library</div></div>
+      <div><div class="topbar-title">Policies</div><div class="topbar-sub" id="policies-subtitle">Loading...</div></div>
       <div class="topbar-actions">
+        <button class="btn btn-secondary" onclick="exportSignatures()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Signatures
+        </button>
         <button class="btn btn-primary" onclick="newPolicy()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Add Policy
@@ -25,8 +58,13 @@
       </div>
     </header>
     <div class="content">
-      <div class="alert alert-info">
-        <strong>Policy library pre-loaded with 10 templates.</strong> Add your organization's specific policy content using the Edit button. Policies must be Approved before your audit.
+
+      <!-- Summary cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
+        <div class="stat-card"><div class="stat-icon" style="background:var(--slate-50);color:var(--navy-600)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="stat-value" id="stat-draft">—</div><div class="stat-label">Draft</div></div></div>
+        <div class="stat-card"><div class="stat-icon yellow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="stat-value" id="stat-review">—</div><div class="stat-label">Under Review</div></div></div>
+        <div class="stat-card"><div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="stat-value" id="stat-approved">—</div><div class="stat-label">Approved</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><div><div class="stat-value" id="stat-sigs">—</div><div class="stat-label">Total Signatures</div></div></div>
       </div>
 
       <div class="toolbar">
@@ -52,13 +90,6 @@
         <span id="policies-count" style="color:var(--text-secondary);font-size:13px;margin-left:auto"></span>
       </div>
 
-      <!-- Summary cards -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
-        <div class="stat-card"><div class="stat-icon" style="background:var(--slate-50);color:var(--navy-600)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="stat-value" id="stat-draft">—</div><div class="stat-label">Draft</div></div></div>
-        <div class="stat-card"><div class="stat-icon yellow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="stat-value" id="stat-review">—</div><div class="stat-label">Under Review</div></div></div>
-        <div class="stat-card"><div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="stat-value" id="stat-approved">—</div><div class="stat-label">Approved</div></div></div>
-      </div>
-
       <div class="policy-grid" id="policy-grid">
         <div style="grid-column:1/-1;text-align:center;padding:40px"><div class="spinner"></div></div>
       </div>
@@ -66,30 +97,84 @@
   </div>
 </div>
 
-<!-- Policy Modal -->
+<!-- View & Sign Modal -->
+<div class="modal-overlay hidden" id="view-modal">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="view-policy-name"></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:3px" id="view-policy-meta"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('view-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--slate-200);margin-bottom:16px">
+        <button class="tab-btn active" id="tab-content" onclick="switchTab('content')" style="padding:8px 18px;border:none;background:none;font-size:14px;font-weight:600;color:var(--blue-500);border-bottom:2px solid var(--blue-500);cursor:pointer">Policy Content</button>
+        <button class="tab-btn" id="tab-sigs" onclick="switchTab('sigs')" style="padding:8px 18px;border:none;background:none;font-size:14px;font-weight:500;color:var(--text-secondary);cursor:pointer">Signatures (<span id="sig-count-tab">0</span>)</button>
+      </div>
+
+      <!-- Content tab -->
+      <div id="panel-content">
+        <div class="policy-content-body" id="view-policy-content"></div>
+        <div style="border-top:1px solid var(--slate-200);padding-top:16px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px">Sign this Policy</div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:8px">
+              <label class="form-label">Your Name <span>*</span></label>
+              <input class="form-control" id="sign-name" type="text" placeholder="Full name">
+            </div>
+            <div class="form-group" style="margin-bottom:8px">
+              <label class="form-label">Title / Role</label>
+              <input class="form-control" id="sign-title" type="text" placeholder="e.g., Security Engineer">
+            </div>
+          </div>
+          <div class="sign-confirm">
+            <input type="checkbox" id="sign-ack">
+            <label for="sign-ack" style="font-size:13px;cursor:pointer">I confirm that I have read, understood, and agree to comply with this policy. I understand this constitutes an electronic signature.</label>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn btn-secondary" onclick="closeModal('view-modal')">Close</button>
+            <button class="btn btn-primary" id="sign-btn" onclick="signPolicy()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+              Sign Policy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signatures tab -->
+      <div id="panel-sigs" style="display:none">
+        <div id="sigs-list"></div>
+        <div id="sigs-empty" class="empty-state" style="display:none;padding:30px">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <p>No signatures yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
 <div class="modal-overlay hidden" id="policy-modal">
   <div class="modal" style="max-width:680px">
     <div class="modal-header">
-      <span class="modal-title" id="policy-modal-title">Add Policy</span>
+      <span class="modal-title" id="policy-modal-title">Edit Policy</span>
       <button class="modal-close" onclick="closeModal('policy-modal')">&times;</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="policy-id">
       <div class="form-group">
         <label class="form-label">Policy Name <span>*</span></label>
-        <input class="form-control" id="policy-name" type="text" placeholder="e.g., Information Security Policy">
+        <input class="form-control" id="policy-name" type="text">
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Category</label>
           <select class="form-control" id="policy-category">
-            <option>Security</option>
-            <option>Access Management</option>
-            <option>Operations</option>
-            <option>Confidentiality</option>
-            <option>Risk Management</option>
-            <option>Availability</option>
-            <option>General</option>
+            <option>Security</option><option>Access Management</option>
+            <option>Operations</option><option>Confidentiality</option>
+            <option>Risk Management</option><option>Availability</option><option>General</option>
           </select>
         </div>
         <div class="form-group">
@@ -117,12 +202,12 @@
       </div>
       <div class="form-group">
         <label class="form-label">Description</label>
-        <input class="form-control" id="policy-desc" type="text" placeholder="Brief summary of this policy's scope">
+        <input class="form-control" id="policy-desc" type="text" placeholder="Brief summary">
       </div>
       <div class="form-group">
         <label class="form-label">Policy Content</label>
-        <textarea class="form-control" id="policy-content" style="min-height:180px" placeholder="Paste or type the full policy text here. You can add this later."></textarea>
-        <div class="form-hint">Full policy text. You can leave this blank and add it when your policies are ready.</div>
+        <textarea class="form-control" id="policy-content" style="min-height:280px;font-family:inherit;font-size:13px;line-height:1.6"></textarea>
+        <div class="form-hint">Full policy text — supports plain text. Updating content will require re-signing by all users.</div>
       </div>
     </div>
     <div class="modal-footer">
