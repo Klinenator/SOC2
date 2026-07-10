@@ -50,7 +50,7 @@ foreach ($tasks as $t) {
           . 'Complete and upload evidence in the SOC portal, then mark the task done.';
 
     $lines[] = 'BEGIN:VEVENT';
-    $lines[] = 'UID:soc-' . $t['id'] . '@soc.rrsaccess.com';
+    $lines[] = 'UID:soc-' . $t['id'] . '@soc2.rrsaccess.com';
     $lines[] = 'DTSTAMP:' . $now;
     $lines[] = 'DTSTART;VALUE=DATE:' . $due;
     $lines[] = 'DTEND;VALUE=DATE:' . $dtend;

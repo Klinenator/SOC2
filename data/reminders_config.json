@@ -5,6 +5,6 @@
   "overdueWeeklyDow": 1,
   "escalateAfterDays": 7,
   "escalateToId": "skline",
-  "portalUrl": "https://soc.rrsaccess.com",
+  "portalUrl": "https://soc2.rrsaccess.com",
   "ticketsUrl": "https://tools.rrsaccess.com/Tickets/"
 }
