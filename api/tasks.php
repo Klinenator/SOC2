@@ -31,6 +31,9 @@ if ($method === 'POST') {
         'description' => $body['description'] ?? '',
         'controlId' => $body['controlId'] ?? '',
         'assignee'  => $body['assignee'] ?? '',
+        'ownerId'   => $body['ownerId'] ?? '',
+        'recurrence'=> in_array($body['recurrence'] ?? '', ['annual','quarterly','monthly','onEvent','once']) ? $body['recurrence'] : 'once',
+        'reminders' => !empty($body['reminders']),
         'priority'  => in_array($body['priority'] ?? '', ['high','medium','low']) ? $body['priority'] : 'medium',
         'status'    => 'open',
         'dueDate'   => $body['dueDate'] ?? '',
@@ -46,7 +49,7 @@ if ($method === 'PUT') {
     if (!$id) error_response('Task ID required');
     $body = get_body();
     $tasks = read_json('tasks.json');
-    $allowed = ['title','description','controlId','assignee','priority','status','dueDate'];
+    $allowed = ['title','description','controlId','assignee','ownerId','recurrence','reminders','priority','status','dueDate'];
     $updated = false;
     foreach ($tasks as &$t) {
         if ($t['id'] === $id) {

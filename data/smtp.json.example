@@ -1,0 +1,9 @@
+{
+  "host": "smtp.gmail.com",
+  "port": 587,
+  "secure": "tls",
+  "username": "admin@accessrrs.com",
+  "password": "REPLACE_WITH_APP_PASSWORD",
+  "from_email": "soc@accessrrs.com",
+  "from_name": "RRS SOC Compliance"
+}

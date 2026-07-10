@@ -1,0 +1,10 @@
+{
+  "dryRun": true,
+  "testRecipient": "skline@accessrrs.com",
+  "leadDays": [30, 14, 7, 1],
+  "overdueWeeklyDow": 1,
+  "escalateAfterDays": 7,
+  "escalateToId": "skline",
+  "portalUrl": "https://soc.rrsaccess.com",
+  "ticketsUrl": "https://tools.rrsaccess.com/Tickets/"
+}

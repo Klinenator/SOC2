@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Management — SOC2 Readiness Portal</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#3b82f6"/><path d="M16 6l8 3v8c0 5-8 9-8 9s-8-4-8-9V9l8-3z" fill="white" opacity=".9"/><path d="M12 16l2.5 2.5L20 12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="sidebar-logo-text">SOC2 Portal</div><div class="sidebar-logo-sub">Audit Readiness</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div><div class="topbar-title">Management Reminders</div><div class="topbar-sub">Owners, recurring obligations, email reminders &amp; calendar</div></div>
+      <div class="topbar-actions">
+        <input type="date" class="filter-select" id="preview-date" title="Preview reminders as of this date">
+        <button class="btn btn-secondary" onclick="previewReminders()">Preview reminders</button>
+      </div>
+    </header>
+    <div class="content">
+
+      <div class="card" id="mode-banner" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span id="mode-pill" class="badge">…</span>
+          <span style="color:var(--text-secondary);font-size:13px" id="mode-note"></span>
+        </div>
+      </div>
+
+      <!-- Owners -->
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <strong>Owners</strong>
+          <span style="color:var(--text-secondary);font-size:12px">Confirm each owner's email before going live. Reminders only email confirmed owners once live.</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Title</th><th>Email</th><th>Confirmed</th><th>Calendar</th></tr></thead>
+            <tbody id="owners-tbody"><tr><td colspan="5" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Calendar subscribe -->
+      <div class="card" style="margin-bottom:16px">
+        <strong>Calendar</strong>
+        <p style="color:var(--text-secondary);font-size:13px;margin:8px 0">
+          Subscribe to a live feed of SOC obligations (recurring events + 30/14/7/1-day alarms).
+          In Google Calendar: <em>Other calendars → From URL</em>, paste the link below.
+        </p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input class="form-control" id="cal-all" readonly style="max-width:520px">
+          <button class="btn btn-secondary" onclick="copyVal('cal-all')">Copy all-owners feed</button>
+        </div>
+      </div>
+
+      <!-- Management tasks -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <strong>Recurring management obligations</strong>
+          <span id="mgmt-count" style="color:var(--text-secondary);font-size:13px"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Task</th><th>Control</th><th>Owner</th><th>Recurrence</th><th>Next due</th><th>Timing</th><th>Status</th></tr></thead>
+            <tbody id="mgmt-tbody"><tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Preview results -->
+      <div class="card hidden" id="preview-card" style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <strong>Would send <span id="preview-when"></span></strong>
+          <button class="btn btn-secondary" onclick="document.getElementById('preview-card').classList.add('hidden')">Close</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Task</th><th>Control</th><th>Due</th><th>When</th><th>Owner</th><th>Escalation</th></tr></thead>
+            <tbody id="preview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/management.js"></script>
+</body>
+</html>

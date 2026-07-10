@@ -1,0 +1,30 @@
+[
+  {
+    "id": "skline",
+    "name": "Sean Kline",
+    "title": "CTO",
+    "email": "skline@accessrrs.com",
+    "confirmed": true
+  },
+  {
+    "id": "mdeitz",
+    "name": "Mary K Deitz",
+    "title": "CEO",
+    "email": "mjdeitz@accessrrs.com",
+    "confirmed": false
+  },
+  {
+    "id": "adellaratta",
+    "name": "Anthony Dellaratta",
+    "title": "COO",
+    "email": "",
+    "confirmed": false
+  },
+  {
+    "id": "hr",
+    "name": "HR / People Ops",
+    "title": "HR",
+    "email": "",
+    "confirmed": false
+  }
+]

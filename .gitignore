@@ -7,6 +7,10 @@ uploads/*
 !uploads/.gitkeep
 data/evidence.json
 
+# Secrets & reminder runtime state — never commit
+data/smtp.json
+data/reminder_log.json
+
 # OS
 .DS_Store
 Thumbs.db
