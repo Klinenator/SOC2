@@ -1,0 +1,60 @@
+#!/bin/sh
+# CC8.1 change-management reminder.
+#
+# Pushing this repo deploys to production (the server git-pulls from CodeCommit),
+# so every push is a production change that must have a change-request ticket:
+#   https://tools.rrsaccess.com/Tickets/
+#
+# Behavior:
+#   - No TTY (CI / automated / agent push): print the reminder and continue.
+#   - Interactive: ask whether a ticket has been filed. "n"/empty aborts so you can
+#     file one first. Bypass anytime with:  SKIP_TICKET_CHECK=1 git push
+#
+# This hook never modifies anything; it only reminds/gates.
+
+TICKETS_URL="https://tools.rrsaccess.com/Tickets/"
+
+# Nothing to push? (git passes refs on stdin; empty => no-op)
+if [ -t 0 ]; then
+  :   # invoked with a tty and no piped refs; treat as a push
+else
+  refs="$(cat)"
+  [ -n "$refs" ] || exit 0
+fi
+
+printf '\n'
+printf '  ┌────────────────────────────────────────────────────────────┐\n'
+printf '  │  CC8.1 CHANGE-MANAGEMENT REMINDER                            │\n'
+printf '  │  This push deploys to production.                            │\n'
+printf '  │  File / link a change ticket:                                │\n'
+printf '  │    %s%*s│\n' "$TICKETS_URL" $((57 - ${#TICKETS_URL})) ""
+printf '  └────────────────────────────────────────────────────────────┘\n'
+
+# Escape hatch for automation / conscious bypass.
+if [ "${SKIP_TICKET_CHECK:-0}" = "1" ]; then
+  printf '  SKIP_TICKET_CHECK=1 set — continuing without prompt.\n\n'
+  exit 0
+fi
+
+# Interactive gate only when a controlling terminal can actually be opened.
+# NOTE: test openability with a simple command (not `exec`) so a failure just
+# yields a false condition instead of exiting this non-interactive shell.
+if { true; } 2>/dev/null < /dev/tty; then
+  printf '  Have you filed a change-request ticket for this push? [y/N] '
+  read answer < /dev/tty
+  case "$answer" in
+    [Yy]*)
+      printf '  Thanks — continuing.\n\n'
+      exit 0
+      ;;
+    *)
+      printf '  Push aborted. File a ticket at %s\n' "$TICKETS_URL"
+      printf '  then re-push, or bypass with:  SKIP_TICKET_CHECK=1 git push\n\n'
+      exit 1
+      ;;
+  esac
+fi
+
+# No controlling terminal (agent/CI): reminder only, do not block.
+printf '  (no terminal — reminder only; not blocking this push)\n\n'
+exit 0
