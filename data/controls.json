@@ -8,7 +8,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. No new hires during review period \u2014 onboarding controls untested. Ensure next audit period includes documented new hire onboarding tickets.",
+    "notes": "AUDIT PASSED. No new hires during review period — onboarding controls untested. Ensure next audit period includes documented new hire onboarding tickets.",
     "evidenceIds": []
   },
   {
@@ -44,7 +44,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. No new hires during review period \u2014 job descriptions reviewed but hiring process untested. Document next hire fully.",
+    "notes": "AUDIT PASSED. No new hires during review period — job descriptions reviewed but hiring process untested. Document next hire fully.",
     "evidenceIds": []
   },
   {
@@ -80,7 +80,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. No new hires during review period \u2014 policy sign-off and security training onboarding untested. Quarterly training records verified.",
+    "notes": "AUDIT PASSED. No new hires during review period — policy sign-off and security training onboarding untested. Quarterly training records verified.",
     "evidenceIds": []
   },
   {
@@ -128,7 +128,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. Fraud risk considered as part of annual risk review \u2014 documented.",
+    "notes": "AUDIT PASSED. Fraud risk considered as part of annual risk review — documented.",
     "evidenceIds": []
   },
   {
@@ -200,7 +200,7 @@
     "status": "gap",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT FLAG. Governance policy review was conducted March 6, 2024 \u2014 BEFORE the audit period began May 20, 2024. Must schedule this year's review to fall inside the audit window.",
+    "notes": "AUDIT FLAG. Governance policy review was conducted March 6, 2024 — BEFORE the audit period began May 20, 2024. Must schedule this year's review to fall inside the audit window.",
     "evidenceIds": []
   },
   {
@@ -212,7 +212,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. CIS report for standard build procedures and password/SSH key configs both verified.",
+    "notes": "AUDIT PASSED. CIS report for standard build procedures and password/SSH key configs both verified. | UPDATE 2026-07: applied CIS L1 SSH hardening (RRS-000066); centralized all DB/SFTP/SMTP/GPG credentials into /var/lib/php-fpm/config.php and removed hardcoded secrets (RRS-000064/065); least-privilege service accounts claude/audit (no sudo, key-only).",
     "evidenceIds": []
   },
   {
@@ -224,7 +224,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. No new hires or terminations during review period \u2014 access provisioning and revocation controls untested. Must document all future changes with tickets.",
+    "notes": "AUDIT PASSED. No new hires or terminations during review period — access provisioning and revocation controls untested. Must document all future changes with tickets. | UPDATE 2026-07: access changes now ticketed (e.g. RRS-000067 claude→audit group).",
     "evidenceIds": []
   },
   {
@@ -248,7 +248,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. Marked Not Applicable \u2014 RRS uses AWS (subservice organization) for physical infrastructure.",
+    "notes": "AUDIT PASSED. Marked Not Applicable — RRS uses AWS (subservice organization) for physical infrastructure.",
     "evidenceIds": []
   },
   {
@@ -260,7 +260,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. No media/device disposals during review period \u2014 Data Retention Policy inspected and verified.",
+    "notes": "AUDIT PASSED. No media/device disposals during review period — Data Retention Policy inspected and verified.",
     "evidenceIds": []
   },
   {
@@ -296,7 +296,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. Windows Defender RMM centrally managed and monitored \u2014 verified.",
+    "notes": "AUDIT PASSED. Windows Defender RMM centrally managed and monitored — verified.",
     "evidenceIds": []
   },
   {
@@ -308,7 +308,7 @@
     "status": "gap",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT FLAG. Penetration test (Apr 22\u2013May 2, 2024) was conducted BEFORE the audit period started. Monthly vulnerability scans verified. Must schedule next pen test to fall inside the audit window.",
+    "notes": "AUDIT FLAG. Penetration test (Apr 22–May 2, 2024) was conducted BEFORE the audit period started. Monthly vulnerability scans verified. Must schedule next pen test to fall inside the audit window. | UPDATE 2026-07: CIS L1 (EC2) baseline audit run via Ubuntu Pro USG (64%); SSH+sysctl hardening in progress; exceptions documented (host firewall = AWS security groups; PAM = key-only accounts). See rrs-security repo.",
     "evidenceIds": []
   },
   {
@@ -368,7 +368,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. No system changes during review period \u2014 change management process untested but policies verified. Must log all future changes in ticket system with management approval.",
+    "notes": "AUDIT PASSED. No system changes during review period — change management process untested but policies verified. Must log all future changes in ticket system with management approval. | UPDATE 2026-07: change management now OPERATING — all production changes logged as tickets (RRS-000060–067) in tools.rrsaccess.com/Tickets with CTO approval; dev/test separate from prod.",
     "evidenceIds": []
   },
   {
@@ -404,7 +404,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. MFA for external users, TLS, data retention policy, clean desk, data classification, password policy, network diagram, 2FA for sensitive systems, test data usage, customer data segregation, role-based access \u2014 all verified.",
+    "notes": "AUDIT PASSED. MFA for external users, TLS, data retention policy, clean desk, data classification, password policy, network diagram, 2FA for sensitive systems, test data usage, customer data segregation, role-based access — all verified.",
     "evidenceIds": []
   },
   {
@@ -416,7 +416,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. 30-day data deletion on contract termination, hardware disposal procedures, paper disposal procedures, secured storage bin, and termination checklist \u2014 all verified. No terminations during review period so termination checklist was untested.",
+    "notes": "AUDIT PASSED. 30-day data deletion on contract termination, hardware disposal procedures, paper disposal procedures, secured storage bin, and termination checklist — all verified. No terminations during review period so termination checklist was untested.",
     "evidenceIds": []
   }
 ]

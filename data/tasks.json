@@ -58,11 +58,11 @@
   {
     "id": "688c9c50-a3ba",
     "title": "Ensure all changes are logged in ticket system",
-    "description": "CC8.1 was untested because no system changes were recorded. All infrastructure, code, and config changes must be submitted via Change Request form and tracked in ticket system with management approval.",
+    "description": "CC8.1 was untested because no system changes were recorded. All infrastructure, code, and config changes must be submitted via Change Request form and tracked in ticket system with management approval. [DONE 2026-07: CC8.1 process operating — RRS-000060–067 logged with approval.]",
     "controlId": "CC8.1",
     "assignee": "",
     "priority": "high",
-    "status": "open",
+    "status": "closed",
     "dueDate": "2026-03-30",
     "createdAt": "2026-03-23",
     "ownerId": "skline",
