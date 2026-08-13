@@ -23,7 +23,8 @@ $stmt = $db->prepare($sql); $stmt->bind_param('s', $since); $stmt->execute(); $r
 $records = [];
 while ($row = $result->fetch_assoc()) {
     $text = strtolower(($row['subject'] ?? '') . ' ' . ($row['category'] ?? ''));
-    $likelyChange = ($row['category'] ?? '') === 'Change Management' || preg_match('/deploy|production|provision|config|fix|add |update|remove|restrict|migrat|hardening/', $text);
+    $likelyChange = ($row['category'] ?? '') === 'Change Management'
+        || preg_match('/deploy|production|provision|config|fix|add |update|upgrade|package change|patch|remove|restrict|migrat|hardening/', $text);
     $records[] = [
         'ticketKey'=>$row['ticket_key'],'subject'=>$row['subject'],'status'=>$row['status'],'priority'=>$row['priority'],
         'category'=>$row['category'] ?: '', 'createdAt'=>$row['created_at'],'updatedAt'=>$row['updated_at'],'closedAt'=>$row['closed_at'],

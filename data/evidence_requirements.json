@@ -53,5 +53,16 @@
     "matchTerms": ["vulnerability", "scan", "nessus", "qualys", "critical findings"],
     "description": "Keep the latest scan output plus evidence that critical findings were assigned and tracked.",
     "collectionMethod": "Upload the scan report and a second file or description tying critical findings to tickets or mitigations."
+  },
+  {
+    "id": "evr-change-ticket-population",
+    "title": "Monthly production change-ticket population and review",
+    "controlId": "CC8.1",
+    "ownerId": "skline",
+    "recurrence": "monthly",
+    "freshnessDays": 35,
+    "matchTerms": ["change population", "change ticket", "patchagent", "package change", "deployment"],
+    "description": "Retain the complete production change-ticket population, including automated Linux package-change tickets, and document management review of authorization, validation, exceptions, and closure.",
+    "collectionMethod": "Refresh the RRS Tickets Change Population export, sample PATCHAGENT and other production-change tickets, and record approval/testing/rollback/closure review. RRS-000125 is the first validated automated package-change sample."
   }
 ]

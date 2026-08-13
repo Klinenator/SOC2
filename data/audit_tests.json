@@ -726,14 +726,16 @@
         "frequency": "on_event",
         "priorProcedure": "Inspect records and configuration evidence to determine that authorized production change requests.",
         "priorResult": "no_events",
-        "populationSource": "",
-        "ownerId": "",
-        "status": "not_started",
-        "sampleRefs": [],
+        "populationSource": "RRS Tickets Change Population export (data/change_population.json), including automated PATCHAGENT package-change records",
+        "ownerId": "skline",
+        "status": "in_progress",
+        "sampleRefs": [
+            "RRS-000125"
+        ],
         "evidenceIds": [],
-        "conclusion": "",
+        "conclusion": "Automated APT capture was validated end-to-end on sftp.rrsaccess.com with RRS-000125. Review the full ticket population for completeness and verify human authorization, testing, approval, and closure for sampled changes.",
         "exception": "",
-        "updatedAt": null
+        "updatedAt": "2026-08-13T14:35:00-04:00"
     },
     {
         "id": "CC8.1-02",

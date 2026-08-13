@@ -368,7 +368,7 @@
     "status": "compliant",
     "owner": "",
     "dueDate": "",
-    "notes": "AUDIT PASSED. No system changes during review period — change management process untested but policies verified. Must log all future changes in ticket system with management approval. | UPDATE 2026-07: change management now OPERATING — all production changes logged as tickets (RRS-000060–067) in tools.rrsaccess.com/Tickets with CTO approval; dev/test separate from prod.",
+    "notes": "AUDIT PASSED. No system changes during review period — change management process untested but policies verified. Must log all future changes in ticket system with management approval. | UPDATE 2026-07: change management now OPERATING — all production changes logged as tickets (RRS-000060–067) in tools.rrsaccess.com/Tickets with CTO approval; dev/test separate from prod. | UPDATE 2026-08: Linux APT package changes on managed servers create idempotent PATCHAGENT tickets automatically (first validated sample RRS-000125). Use the Change Population export for completeness testing; automated capture does not replace human authorization, approval, validation, or closure.",
     "evidenceIds": []
   },
   {
