@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Evidence Gaps — SOC2 Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar"><div class="sidebar-logo"><div><div class="sidebar-logo-text">SOC2 Portal</div><div class="sidebar-logo-sub">Audit Readiness</div></div></div><nav class="sidebar-nav" id="sidebar-nav"></nav></aside>
+  <div class="main">
+    <header class="topbar"><div><div class="topbar-title">Evidence Gaps</div><div class="topbar-sub">Artifact coverage across controls, tickets, workpapers, policies, and uploads</div></div></header>
+    <div class="content">
+      <div class="alert alert-info">A control marked compliant is not automatically treated as evidenced. Coverage requires an independently reviewable artifact or is shown as partial.</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div><div class="stat-value" id="gap-total">—</div><div class="stat-label">Controls</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="gap-covered">—</div><div class="stat-label">Evidence Present</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="gap-partial">—</div><div class="stat-label">Partial</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="gap-none">—</div><div class="stat-label">No Evidence</div></div></div>
+      </div>
+      <div class="toolbar">
+        <div class="search-box"><input id="gap-search" placeholder="Search controls..." oninput="renderGaps()"></div>
+        <select class="filter-select" id="gap-coverage" onchange="renderGaps()"><option value="attention">Needs attention</option><option value="all">All coverage</option><option value="evidence_present">Evidence present</option><option value="partial">Partial</option><option value="no_evidence">No evidence</option></select>
+        <select class="filter-select" id="gap-category" onchange="renderGaps()"><option value="all">All categories</option></select>
+        <span id="gap-count" style="margin-left:auto;color:var(--text-secondary)"></span>
+      </div>
+      <div class="card"><div class="table-wrap"><table><thead><tr><th>Control</th><th>Coverage</th><th>Artifacts</th><th>Recurring Evidence</th><th>Open Tasks</th><th>Next Action</th></tr></thead><tbody id="gaps-body"></tbody></table></div></div>
+      <div class="card" style="margin-top:20px"><div class="card-header"><span class="card-title">Coverage Method</span></div><div class="card-body" id="gap-methodology"></div></div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/gaps.js"></script>
+</body>
+</html>
