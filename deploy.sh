@@ -6,6 +6,17 @@ DIR="/var/www/SOC2"
 
 echo "==> Deploying SOC2 Portal to $DIR"
 
+CERT_DIR="/etc/letsencrypt/live/soc2.rrsaccess.com"
+AUTH_FILE="/etc/soc2/soc2-secrets.conf"
+if [ ! -r "$CERT_DIR/fullchain.pem" ] || [ ! -r "$CERT_DIR/privkey.pem" ]; then
+  echo "ERROR: Valid TLS certificate files for soc2.rrsaccess.com are required in $CERT_DIR" >&2
+  exit 1
+fi
+if [ ! -r "$AUTH_FILE" ]; then
+  echo "ERROR: $AUTH_FILE is required. Copy SECURITY.md's Google OAuth fastcgi parameters into it." >&2
+  exit 1
+fi
+
 echo "==> Fixing repository ownership..."
 sudo chown -R "$USER":"$USER" "$DIR" 2>/dev/null || true
 git config --global --add safe.directory "$DIR" 2>/dev/null || true

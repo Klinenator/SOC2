@@ -29,6 +29,13 @@
         Upload evidence files (PDFs, screenshots, exports) and link them to specific controls. Supported: PDF, PNG, JPG, DOCX, XLSX, CSV, TXT, ZIP (max 50MB).
       </div>
 
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card"><div><div class="stat-value" id="req-total">—</div><div class="stat-label">Tracked Evidence Checks</div><div class="stat-sub">Recurring operational proof</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="req-on-track">—</div><div class="stat-label">On Track</div><div class="stat-sub">Fresh evidence on file</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="req-stale">—</div><div class="stat-label">Stale</div><div class="stat-sub">Refresh soon</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="req-missing">—</div><div class="stat-label">Missing</div><div class="stat-sub">No matching proof uploaded</div></div></div>
+      </div>
+
       <div class="toolbar">
         <div class="search-box">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -47,14 +54,40 @@
               <tr>
                 <th>File</th>
                 <th>Description</th>
+                <th>Source</th>
                 <th>Linked Controls</th>
-                <th>Size</th>
+                <th>Evidence Date</th>
                 <th>Uploaded</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="evidence-tbody">
-              <tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+              <tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:20px">
+        <div class="card-header">
+          <span class="card-title">Operational Evidence Plan</span>
+          <span style="font-size:12px;color:var(--text-secondary)">Built from the audit pain points that were hardest to prove last time</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Requirement</th>
+                <th>Control</th>
+                <th>Cadence</th>
+                <th>Last Evidence</th>
+                <th>Next Due</th>
+                <th>Status</th>
+                <th>Collection Plan</th>
+              </tr>
+            </thead>
+            <tbody id="requirements-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -84,11 +117,26 @@
         <label class="form-label">Description</label>
         <input class="form-control" id="upload-desc" type="text" placeholder="e.g., Q1 2026 Access Review Screenshot">
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Source System</label>
+          <input class="form-control" id="upload-source" type="text" placeholder="e.g., Atera, AWS CloudWatch, Windows Defender">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Evidence Date</label>
+          <input class="form-control" id="upload-evidence-date" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Collected By</label>
+        <input class="form-control" id="upload-owner" type="text" placeholder="Name or team">
+      </div>
       <div class="form-group">
         <label class="form-label">Link to Controls</label>
         <div id="control-checkboxes" style="max-height:200px;overflow-y:auto;border:1px solid var(--slate-300);border-radius:var(--radius);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px"></div>
         <div class="form-hint">Select one or more controls this evidence supports</div>
       </div>
+      <div class="form-group"><label class="form-label">Audit test activity</label><select class="form-control" id="upload-workpaper"><option value="">Not linked to a specific workpaper</option></select></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('upload-modal')">Cancel</button>
@@ -109,10 +157,25 @@
         <label class="form-label">Description</label>
         <input class="form-control" id="edit-desc" type="text">
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Source System</label>
+          <input class="form-control" id="edit-source" type="text">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Evidence Date</label>
+          <input class="form-control" id="edit-evidence-date" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Collected By</label>
+        <input class="form-control" id="edit-owner" type="text">
+      </div>
       <div class="form-group">
         <label class="form-label">Linked Controls</label>
         <div id="edit-control-checkboxes" style="max-height:200px;overflow-y:auto;border:1px solid var(--slate-300);border-radius:var(--radius);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:4px"></div>
       </div>
+      <div class="form-group"><label class="form-label">Audit test activity</label><select class="form-control" id="edit-workpaper"><option value="">Not linked to a specific workpaper</option></select></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancel</button>

@@ -5,11 +5,24 @@ cors();
 $method = $_SERVER['REQUEST_METHOD'];
 $id = $_GET['id'] ?? null;
 $controlId = $_GET['controlId'] ?? null;
+$category = $_GET['category'] ?? null;
+
+// Which team owns the work. Tasks predating categorization fall back to 'business'.
+const TASK_CATEGORIES = ['business', 'it', 'hr'];
+
+function next_recurring_due($dueDate, $recurrence) {
+    if (!$dueDate) return '';
+    $intervals = ['monthly' => '+1 month', 'quarterly' => '+3 months', 'annual' => '+1 year'];
+    return isset($intervals[$recurrence]) ? date('Y-m-d', strtotime($dueDate . ' ' . $intervals[$recurrence])) : '';
+}
 
 if ($method === 'GET') {
     $tasks = read_json('tasks.json');
     if ($controlId) {
         $tasks = array_values(array_filter($tasks, fn($t) => $t['controlId'] === $controlId));
+    }
+    if ($category) {
+        $tasks = array_values(array_filter($tasks, fn($t) => ($t['category'] ?? 'business') === $category));
     }
     // Sort by priority then dueDate
     usort($tasks, function($a, $b) {
@@ -30,6 +43,7 @@ if ($method === 'POST') {
         'title'     => trim($body['title']),
         'description' => $body['description'] ?? '',
         'controlId' => $body['controlId'] ?? '',
+        'category'  => in_array($body['category'] ?? '', TASK_CATEGORIES) ? $body['category'] : 'business',
         'assignee'  => $body['assignee'] ?? '',
         'ownerId'   => $body['ownerId'] ?? '',
         'recurrence'=> in_array($body['recurrence'] ?? '', ['annual','quarterly','monthly','onEvent','once']) ? $body['recurrence'] : 'once',
@@ -48,20 +62,36 @@ if ($method === 'POST') {
 if ($method === 'PUT') {
     if (!$id) error_response('Task ID required');
     $body = get_body();
+    if (array_key_exists('category', $body) && !in_array($body['category'], TASK_CATEGORIES)) {
+        error_response('Invalid category');
+    }
     $tasks = read_json('tasks.json');
-    $allowed = ['title','description','controlId','assignee','ownerId','recurrence','reminders','priority','status','dueDate'];
+    $allowed = ['title','description','controlId','category','assignee','ownerId','recurrence','reminders','priority','status','dueDate'];
     $updated = false;
     foreach ($tasks as &$t) {
         if ($t['id'] === $id) {
+            $wasOpen = ($t['status'] ?? '') === 'open';
             foreach ($allowed as $field) {
                 if (array_key_exists($field, $body)) $t[$field] = $body[$field];
             }
+            if ($wasOpen && ($t['status'] ?? '') === 'closed') $t['completedAt'] = date('Y-m-d H:i:s');
             $updated = true;
             $result = $t;
             break;
         }
     }
     if (!$updated) error_response('Task not found', 404);
+    $recurrence = $result['recurrence'] ?? 'once';
+    if ($wasOpen && ($result['status'] ?? '') === 'closed' && in_array($recurrence, ['monthly','quarterly','annual'], true)) {
+        $nextDue = next_recurring_due($result['dueDate'] ?? '', $recurrence);
+        $exists = array_filter($tasks, fn($candidate) => ($candidate['seriesId'] ?? '') === ($result['seriesId'] ?? $result['id']) && ($candidate['status'] ?? '') === 'open');
+        if ($nextDue && !$exists) {
+            $next = $result;
+            $next['id'] = uuid(); $next['seriesId'] = $result['seriesId'] ?? $result['id']; $next['status'] = 'open';
+            $next['dueDate'] = $nextDue; $next['createdAt'] = date('Y-m-d'); unset($next['completedAt']);
+            $tasks[] = $next;
+        }
+    }
     write_json('tasks.json', $tasks);
     json_response($result);
 }

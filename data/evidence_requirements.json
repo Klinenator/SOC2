@@ -1,0 +1,57 @@
+[
+  {
+    "id": "evr-patching",
+    "title": "Monthly server patch compliance export",
+    "controlId": "CC7.3",
+    "ownerId": "skline",
+    "recurrence": "monthly",
+    "freshnessDays": 35,
+    "matchTerms": ["patch", "update", "compliance", "atera", "windows update"],
+    "description": "Keep a monthly export or screenshot proving production servers were reviewed for missing patches and remediated.",
+    "collectionMethod": "Export Atera or patch dashboard results, capture the review date, and link any remediation ticket numbers in the evidence description."
+  },
+  {
+    "id": "evr-log-review",
+    "title": "Weekly security log review summary",
+    "controlId": "CC7.3",
+    "ownerId": "skline",
+    "recurrence": "monthly",
+    "freshnessDays": 14,
+    "matchTerms": ["log review", "security event", "siem", "incident", "postmortem"],
+    "description": "Retain a recent summary showing identified security events were reviewed and closed or escalated.",
+    "collectionMethod": "Upload a ticket/export showing reviewed security events, owner, disposition, and closure date."
+  },
+  {
+    "id": "evr-log-storage",
+    "title": "Quarterly log retention and storage settings proof",
+    "controlId": "CC7.2",
+    "ownerId": "skline",
+    "recurrence": "quarterly",
+    "freshnessDays": 100,
+    "matchTerms": ["retention", "log storage", "cloudwatch", "s3", "syslog"],
+    "description": "Document where logs are stored, how long they are retained, and that retention settings remain enabled.",
+    "collectionMethod": "Capture screenshots or exports of log storage destinations and retention policies for each production logging source."
+  },
+  {
+    "id": "evr-antimalware",
+    "title": "Monthly anti-malware management proof",
+    "controlId": "CC6.8",
+    "ownerId": "skline",
+    "recurrence": "monthly",
+    "freshnessDays": 35,
+    "matchTerms": ["defender", "anti-malware", "antivirus", "malware", "atera"],
+    "description": "Show anti-malware is centrally managed and active on covered endpoints and servers.",
+    "collectionMethod": "Export or screenshot the Windows Defender / Atera management view showing policy, update status, and device coverage."
+  },
+  {
+    "id": "evr-vuln-scan",
+    "title": "Monthly vulnerability scan report and remediation summary",
+    "controlId": "CC7.1",
+    "ownerId": "skline",
+    "recurrence": "monthly",
+    "freshnessDays": 35,
+    "matchTerms": ["vulnerability", "scan", "nessus", "qualys", "critical findings"],
+    "description": "Keep the latest scan output plus evidence that critical findings were assigned and tracked.",
+    "collectionMethod": "Upload the scan report and a second file or description tying critical findings to tickets or mitigations."
+  }
+]

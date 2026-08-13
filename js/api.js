@@ -4,10 +4,14 @@
 const NAV_LINKS = [
   { href: '/index.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></rect></svg>`, label: 'Dashboard' },
   { href: '/controls.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>`, label: 'Controls' },
+  { href: '/audit_tests.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 13l2 2 4-4"/></svg>`, label: 'Workpapers' },
+  { href: '/change_population.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-7"/></svg>`, label: 'Changes' },
   { href: '/evidence.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`, label: 'Evidence' },
   { href: '/tasks.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`, label: 'Tasks', badgeId: 'nav-tasks-badge' },
+  { href: '/patching.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="7" rx="2"/><rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 8h.01"/><path d="M6 17h.01"/></svg>`, label: 'Patching' },
   { href: '/policies.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, label: 'Policies' },
   { href: '/management.html', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`, label: 'Management', badgeId: 'nav-mgmt-badge' },
+  { href: '/api/auth.php?action=logout', icon: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>`, label: 'Sign out' },
 ];
 
 function renderNav() {
@@ -35,7 +39,9 @@ async function loadNavBadge() {
 // ===== API wrapper =====
 const api = {
   async request(url, opts = {}) {
-    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    const headers = { 'Content-Type': 'application/json', 'X-SOC2-Request': '1', ...(opts.headers || {}) };
+    const res = await fetch(url, { ...opts, headers, credentials: 'same-origin' });
+    if (res.status === 401) { window.location.href = '/api/auth.php?action=login'; throw new Error('Authentication required'); }
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
       throw new Error(err.error || res.statusText);
@@ -48,7 +54,7 @@ const api = {
   delete(url)        { return this.request(url, { method: 'DELETE' }); },
 
   async upload(url, formData) {
-    const res = await fetch(url, { method: 'POST', body: formData });
+    const res = await fetch(url, { method: 'POST', body: formData, credentials: 'same-origin', headers: { 'X-SOC2-Request': '1' } });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }));
       throw new Error(err.error || res.statusText);
@@ -76,6 +82,8 @@ function toast(msg, type = 'success') {
 const STATUS_LABELS = {
   not_started: 'Not Started', in_progress: 'In Progress',
   compliant: 'Compliant', gap: 'Gap',
+  ready: 'Ready', tested: 'Tested', exception: 'Exception', not_applicable: 'Not Applicable',
+  on_track: 'On Track', stale: 'Stale', missing: 'Missing',
   open: 'Open', closed: 'Closed',
   draft: 'Draft', under_review: 'Under Review', approved: 'Approved',
   high: 'High', medium: 'Medium', low: 'Low',

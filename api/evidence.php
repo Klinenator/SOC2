@@ -6,6 +6,20 @@ $method = $_SERVER['REQUEST_METHOD'];
 $id = $_GET['id'] ?? null;
 $controlId = $_GET['controlId'] ?? null;
 
+// Serve file download
+if ($method === 'GET' && isset($_GET['download'])) {
+    $evidence = read_json('evidence.json');
+    $record = array_values(array_filter($evidence, fn($e) => $e['id'] === $_GET['download']))[0] ?? null;
+    if (!$record) error_response('Not found', 404);
+    $path = UPLOADS_DIR . $record['storedName'];
+    if (!file_exists($path)) error_response('File not found', 404);
+    header('Content-Type: ' . $record['mimeType']);
+    header('Content-Disposition: attachment; filename="' . $record['filename'] . '"');
+    header('Content-Length: ' . filesize($path));
+    readfile($path);
+    exit;
+}
+
 if ($method === 'GET') {
     $evidence = read_json('evidence.json');
     if ($controlId) {
@@ -39,6 +53,7 @@ if ($method === 'POST') {
     if (!empty($_POST['controlIds'])) {
         $controlIds = json_decode($_POST['controlIds'], true) ?? [];
     }
+    $auditTestIds = !empty($_POST['auditTestIds']) ? (json_decode($_POST['auditTestIds'], true) ?? []) : [];
 
     $record = [
         'id'          => uuid(),
@@ -47,7 +62,11 @@ if ($method === 'POST') {
         'size'        => $file['size'],
         'mimeType'    => $mime,
         'description' => $_POST['description'] ?? '',
+        'source'      => $_POST['source'] ?? '',
+        'owner'       => $_POST['owner'] ?? '',
+        'evidenceDate'=> $_POST['evidenceDate'] ?? '',
         'controlIds'  => $controlIds,
+        'auditTestIds'=> $auditTestIds,
         'uploadedAt'  => date('Y-m-d H:i:s'),
     ];
 
@@ -66,6 +85,15 @@ if ($method === 'POST') {
         }
         write_json('controls.json', array_values($controls));
     }
+    if ($auditTestIds) {
+        $tests = read_json('audit_tests.json');
+        foreach ($tests as &$test) if (in_array($test['id'], $auditTestIds, true)) {
+            $test['evidenceIds'][] = $record['id'];
+            $test['evidenceIds'] = array_values(array_unique($test['evidenceIds']));
+            if (($test['status'] ?? '') === 'not_started') $test['status'] = 'in_progress';
+        }
+        write_json('audit_tests.json', $tests);
+    }
 
     json_response($record, 201);
 }
@@ -80,9 +108,13 @@ if ($method === 'PUT') {
         if ($e['id'] === $id) {
             $old = $e;
             if (isset($body['description'])) $e['description'] = $body['description'];
+            if (isset($body['source'])) $e['source'] = $body['source'];
+            if (isset($body['owner'])) $e['owner'] = $body['owner'];
+            if (isset($body['evidenceDate'])) $e['evidenceDate'] = $body['evidenceDate'];
             if (isset($body['controlIds'])) {
                 $e['controlIds'] = $body['controlIds'];
             }
+            if (isset($body['auditTestIds'])) $e['auditTestIds'] = $body['auditTestIds'];
             $updated = true;
             $result = $e;
             break;
@@ -107,6 +139,16 @@ if ($method === 'PUT') {
             }
         }
         write_json('controls.json', array_values($controls));
+    }
+    if (isset($body['auditTestIds']) && $old) {
+        $tests = read_json('audit_tests.json');
+        $oldIds = $old['auditTestIds'] ?? []; $newIds = $body['auditTestIds'];
+        foreach ($tests as &$test) {
+            $was = in_array($test['id'], $oldIds, true); $now = in_array($test['id'], $newIds, true);
+            if ($was && !$now) $test['evidenceIds'] = array_values(array_filter($test['evidenceIds'] ?? [], fn($eid) => $eid !== $id));
+            elseif (!$was && $now) { $test['evidenceIds'][] = $id; $test['evidenceIds'] = array_values(array_unique($test['evidenceIds'])); }
+        }
+        write_json('audit_tests.json', $tests);
     }
 
     json_response($result);
@@ -136,22 +178,13 @@ if ($method === 'DELETE') {
         }
         write_json('controls.json', array_values($controls));
     }
+    if (!empty($record['auditTestIds'])) {
+        $tests = read_json('audit_tests.json');
+        foreach ($tests as &$test) $test['evidenceIds'] = array_values(array_filter($test['evidenceIds'] ?? [], fn($eid) => $eid !== $id));
+        write_json('audit_tests.json', $tests);
+    }
 
     json_response(['ok' => true]);
-}
-
-// Serve file download
-if ($method === 'GET' && isset($_GET['download'])) {
-    $evidence = read_json('evidence.json');
-    $record = array_values(array_filter($evidence, fn($e) => $e['id'] === $_GET['download']))[0] ?? null;
-    if (!$record) error_response('Not found', 404);
-    $path = UPLOADS_DIR . $record['storedName'];
-    if (!file_exists($path)) error_response('File not found', 404);
-    header('Content-Type: ' . $record['mimeType']);
-    header('Content-Disposition: attachment; filename="' . $record['filename'] . '"');
-    header('Content-Length: ' . filesize($path));
-    readfile($path);
-    exit;
 }
 
 error_response('Method not allowed', 405);

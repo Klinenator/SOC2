@@ -2,21 +2,60 @@ let allTasks = [];
 let allControls = [];
 let editingTaskId = null;
 
+// Tasks are split by the team responsible for them so each owner sees only their queue.
+const TABS = [
+  { id: 'all',      label: 'All Tasks' },
+  { id: 'business', label: 'Business' },
+  { id: 'it',       label: 'IT' },
+  { id: 'hr',       label: 'HR' },
+];
+const CATEGORY_LABELS = { business: 'Business', it: 'IT', hr: 'HR' };
+let activeTab = 'all';
+
+function categoryOf(t) { return t.category || 'business'; }
+function tasksInTab(tab = activeTab) {
+  return tab === 'all' ? allTasks : allTasks.filter(t => categoryOf(t) === tab);
+}
+
 async function load() {
+  activeTab = TABS.some(t => t.id === location.hash.slice(1)) ? location.hash.slice(1) : 'all';
   [allTasks, allControls] = await Promise.all([
     api.get('/api/tasks.php'),
     api.get('/api/controls.php'),
   ]);
   populateControlFilter();
   populateControlSelect('task-control');
-  renderTasks();
+  renderTabs();
+  filterTasks();
+  updateSubtitle();
+}
+
+function renderTabs() {
+  document.getElementById('tasks-tabs').innerHTML = TABS.map(tab => {
+    const scoped = tasksInTab(tab.id);
+    const open = scoped.filter(t => t.status === 'open').length;
+    const overdue = scoped.filter(t => t.status === 'open' && t.dueDate && t.dueDate < today()).length;
+    return `<button class="tab ${tab.id === activeTab ? 'active' : ''}" onclick="selectTab('${tab.id}')">
+      <span>${tab.label}</span>
+      <span class="tab-count ${overdue ? 'overdue' : ''}" title="${open} open${overdue ? `, ${overdue} overdue` : ''}">${open}</span>
+    </button>`;
+  }).join('');
+}
+
+function selectTab(id) {
+  activeTab = id;
+  history.replaceState(null, '', id === 'all' ? location.pathname : `#${id}`);
+  renderTabs();
+  filterTasks();
   updateSubtitle();
 }
 
 function updateSubtitle() {
-  const open = allTasks.filter(t => t.status === 'open').length;
-  const overdue = allTasks.filter(t => t.status === 'open' && t.dueDate && t.dueDate < today()).length;
-  let sub = `${allTasks.length} task${allTasks.length !== 1 ? 's' : ''} — ${open} open`;
+  const scoped = tasksInTab();
+  const open = scoped.filter(t => t.status === 'open').length;
+  const overdue = scoped.filter(t => t.status === 'open' && t.dueDate && t.dueDate < today()).length;
+  const who = activeTab === 'all' ? '' : `${CATEGORY_LABELS[activeTab]} — `;
+  let sub = `${who}${scoped.length} task${scoped.length !== 1 ? 's' : ''} — ${open} open`;
   if (overdue) sub += ` · ${overdue} overdue`;
   document.getElementById('tasks-subtitle').textContent = sub;
 }
@@ -52,7 +91,7 @@ function filterTasks() {
   const priority = document.getElementById('filter-priority').value;
   const ctrl = document.getElementById('filter-control').value;
 
-  const filtered = allTasks.filter(t => {
+  const filtered = tasksInTab().filter(t => {
     if (status && t.status !== status) return false;
     if (priority && t.priority !== priority) return false;
     if (ctrl && t.controlId !== ctrl) return false;
@@ -64,12 +103,16 @@ function filterTasks() {
   renderTasks(filtered);
 }
 
-function renderTasks(tasks = allTasks) {
+function renderTasks(tasks = tasksInTab()) {
   const tbody = document.getElementById('tasks-tbody');
   document.getElementById('tasks-count').textContent = `${tasks.length} task${tasks.length !== 1 ? 's' : ''}`;
 
+  // The Team column is redundant once a single team's tab is selected.
+  const showTeam = activeTab === 'all';
+  document.getElementById('th-team').style.display = showTeam ? '' : 'none';
+
   if (!tasks.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       <h3>No tasks found</h3><p>Create a task using the button above</p></div></td></tr>`;
     return;
@@ -84,6 +127,7 @@ function renderTasks(tasks = allTasks) {
         ${t.status === 'closed' ? '<s>' : ''}${escHtml(t.title)}${t.status === 'closed' ? '</s>' : ''}
         ${t.description ? `<div class="td-muted" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${escHtml(t.description)}</div>` : ''}
       </td>
+      ${showTeam ? `<td>${teamBadge(categoryOf(t))}</td>` : ''}
       <td>${t.controlId ? `<span class="td-mono">${escHtml(t.controlId)}</span>` : '<span class="td-muted">—</span>'}</td>
       <td class="td-muted">${escHtml(t.assignee) || '—'}</td>
       <td ${dueCls}>${formatDate(t.dueDate)}${isOverdue ? ' ⚠' : ''}</td>
@@ -101,6 +145,10 @@ function renderTasks(tasks = allTasks) {
   }).join('');
 }
 
+function teamBadge(cat) {
+  return `<span class="badge badge-${cat}">${CATEGORY_LABELS[cat] || cat}</span>`;
+}
+
 function resetTaskForm() {
   editingTaskId = null;
   document.getElementById('task-modal-title').textContent = 'New Task';
@@ -108,6 +156,8 @@ function resetTaskForm() {
   document.getElementById('task-title').value = '';
   document.getElementById('task-desc').value = '';
   document.getElementById('task-control').value = '';
+  // Pre-select the tab being viewed so new tasks land in the queue you're looking at.
+  document.getElementById('task-category').value = activeTab === 'all' ? 'business' : activeTab;
   document.getElementById('task-assignee').value = '';
   document.getElementById('task-priority').value = 'medium';
   document.getElementById('task-due').value = '';
@@ -123,6 +173,7 @@ function openEditTask(id) {
   document.getElementById('task-title').value = t.title;
   document.getElementById('task-desc').value = t.description || '';
   document.getElementById('task-control').value = t.controlId || '';
+  document.getElementById('task-category').value = categoryOf(t);
   document.getElementById('task-assignee').value = t.assignee || '';
   document.getElementById('task-priority').value = t.priority;
   document.getElementById('task-due').value = t.dueDate || '';
@@ -138,6 +189,7 @@ async function saveTask() {
     title,
     description: document.getElementById('task-desc').value.trim(),
     controlId:   document.getElementById('task-control').value,
+    category:    document.getElementById('task-category').value,
     assignee:    document.getElementById('task-assignee').value.trim(),
     priority:    document.getElementById('task-priority').value,
     dueDate:     document.getElementById('task-due').value,
@@ -155,6 +207,7 @@ async function saveTask() {
       allTasks.unshift(created);
       toast('Task created');
     }
+    renderTabs();
     filterTasks();
     updateSubtitle();
     loadNavBadge();
@@ -169,7 +222,7 @@ async function closeTask(id) {
     const updated = await api.put(`/api/tasks.php?id=${id}`, { status: 'closed' });
     const idx = allTasks.findIndex(t => t.id === id);
     if (idx > -1) Object.assign(allTasks[idx], updated);
-    filterTasks(); updateSubtitle(); loadNavBadge();
+    renderTabs(); filterTasks(); updateSubtitle(); loadNavBadge();
     toast('Task closed ✓');
   } catch (e) { toast('Error: ' + e.message, 'error'); }
 }
@@ -179,7 +232,7 @@ async function reopenTask(id) {
     const updated = await api.put(`/api/tasks.php?id=${id}`, { status: 'open' });
     const idx = allTasks.findIndex(t => t.id === id);
     if (idx > -1) Object.assign(allTasks[idx], updated);
-    filterTasks(); updateSubtitle(); loadNavBadge();
+    renderTabs(); filterTasks(); updateSubtitle(); loadNavBadge();
     toast('Task reopened');
   } catch (e) { toast('Error: ' + e.message, 'error'); }
 }
@@ -189,9 +242,15 @@ async function deleteTask(id) {
   try {
     await api.delete(`/api/tasks.php?id=${id}`);
     allTasks = allTasks.filter(t => t.id !== id);
-    filterTasks(); updateSubtitle(); loadNavBadge();
+    renderTabs(); filterTasks(); updateSubtitle(); loadNavBadge();
     toast('Task deleted');
   } catch (e) { toast('Error: ' + e.message, 'error'); }
 }
+
+// Back/forward and pasted #it / #hr links switch tabs without a reload.
+window.addEventListener('hashchange', () => {
+  const id = location.hash.slice(1) || 'all';
+  if (TABS.some(t => t.id === id) && id !== activeTab) selectTab(id);
+});
 
 document.addEventListener('DOMContentLoaded', load);

@@ -8,6 +8,7 @@ async function loadDashboard() {
     renderCategoryBars();
     renderStatusBreakdown();
     renderUpcomingTasks();
+    renderEvidenceHealth();
   } catch (e) {
     console.error(e);
   }
@@ -21,10 +22,11 @@ function renderStats() {
   document.getElementById('stat-evidence').textContent  = d.evidence.total;
 
   const inProg = d.controls.byStatus.in_progress;
+  const ev = d.evidence.requirements || { on_track: 0, stale: 0, missing: 0 };
   document.getElementById('stat-coverage').textContent    = `${inProg} in progress`;
   document.getElementById('stat-compliant-pct').textContent = `${d.readinessScore}% overall`;
   document.getElementById('stat-open-tasks').textContent = `${d.tasks.open} open task${d.tasks.open !== 1 ? 's' : ''}`;
-  document.getElementById('stat-policies').textContent   = `${d.policies.byStatus.approved} policies approved`;
+  document.getElementById('stat-policies').textContent   = `${ev.on_track} on track · ${ev.stale + ev.missing} need attention`;
 }
 
 function renderScore() {
@@ -44,7 +46,8 @@ function renderScore() {
   pct.textContent = score + '%';
 
   const c = dashData.controls.byStatus;
-  sub.textContent = `${c.compliant}/${dashData.controls.total} compliant`;
+  const b = dashData.readinessBreakdown || {};
+  sub.textContent = `Workpapers ${b.workpapers || 0}% · Evidence ${b.evidence || 0}%`;
 }
 
 function renderCategoryBars() {
@@ -119,6 +122,45 @@ function renderUpcomingTasks() {
     </li>`;
   }).join('')}</ul>
   ${dashData.tasks.overdue > 0 ? `<div class="alert alert-warn" style="margin-top:14px;margin-bottom:0">${dashData.tasks.overdue} task${dashData.tasks.overdue>1?'s':''} overdue — <a href="/tasks.html">view tasks</a></div>` : ''}`;
+}
+
+function renderEvidenceHealth() {
+  const el = document.getElementById('evidence-health');
+  const ev = dashData.evidence.requirements || { on_track: 0, stale: 0, missing: 0 };
+  const total = ev.on_track + ev.stale + ev.missing;
+
+  if (!total) {
+    el.innerHTML = `<div class="empty-state" style="padding:30px">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <p>No operational evidence plan defined yet</p>
+    </div>`;
+    return;
+  }
+
+  const rows = [
+    { label: 'On track', count: ev.on_track, color: 'var(--green-500)' },
+    { label: 'Stale', count: ev.stale, color: 'var(--yellow-500)' },
+    { label: 'Missing', count: ev.missing, color: 'var(--red-500)' },
+  ];
+
+  el.innerHTML = rows.map(row => {
+    const pct = Math.round((row.count / total) * 100);
+    return `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px">
+            <span style="width:10px;height:10px;border-radius:50%;background:${row.color};display:inline-block"></span>
+            ${row.label}
+          </span>
+          <span style="font-size:13px;color:var(--text-secondary)">${row.count}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:${row.color};transition:width .8s ease"></div>
+        </div>
+      </div>`;
+  }).join('') + `<div class="alert ${ev.missing ? 'alert-warn' : 'alert-info'}" style="margin-top:14px;margin-bottom:0">
+    ${ev.missing ? `${ev.missing} operational evidence item${ev.missing > 1 ? 's are' : ' is'} missing outright.` : 'Operational evidence plan is populated and being tracked.'}
+  </div>`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

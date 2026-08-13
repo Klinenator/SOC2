@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patching — SOC2 Readiness Portal</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#3b82f6"/><path d="M16 6l8 3v8c0 5-8 9-8 9s-8-4-8-9V9l8-3z" fill="white" opacity=".9"/><path d="M12 16l2.5 2.5L20 12" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><div class="sidebar-logo-text">SOC2 Portal</div><div class="sidebar-logo-sub">Audit Readiness</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div><div class="topbar-title">Server Patching</div><div class="topbar-sub" id="patching-subtitle">Linux patch status, queued jobs, and audit trail</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-secondary" onclick="refreshData()">Refresh</button>
+        <button class="btn btn-primary" onclick="openServerModal()">Add Server</button>
+      </div>
+    </header>
+    <div class="content">
+      <div class="alert alert-info">
+        Agents post current patch state to this page and poll for queued `scan` or `security-upgrade` jobs. This gives you a cleaner monthly review trail than raw `apt upgrade` alone.
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div><div class="stat-value" id="stat-servers">—</div><div class="stat-label">Servers</div><div class="stat-sub">Configured for patch reporting</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="stat-healthy">—</div><div class="stat-label">Healthy Check-ins</div><div class="stat-sub">Checked in within 24 hours</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="stat-security">—</div><div class="stat-label">Security Updates</div><div class="stat-sub">Current open security updates</div></div></div>
+        <div class="stat-card"><div><div class="stat-value" id="stat-jobs">—</div><div class="stat-label">Pending Jobs</div><div class="stat-sub">Queued or acknowledged jobs</div></div></div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card full">
+          <div class="card-header">
+            <span class="card-title">Servers</span>
+            <span style="font-size:12px;color:var(--text-secondary)">Create one record per Linux server and install the agent with that server token.</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Server</th>
+                  <th>Owner</th>
+                  <th>Health</th>
+                  <th>OS</th>
+                  <th>Updates</th>
+                  <th>Last Check-in</th>
+                  <th>Last Patch</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="servers-tbody">
+                <tr><td colspan="8" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Selected Server Details</span></div>
+          <div class="card-body" id="server-detail">
+            <div class="empty-state" style="padding:30px 20px">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="8" rx="2"/><rect x="2" y="12" width="20" height="8" rx="2"/></svg>
+              <p>Select a server to inspect updates and held packages.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-title">Recent Patch Jobs</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Server</th>
+                  <th>Command</th>
+                  <th>Status</th>
+                  <th>Requested By</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-tbody">
+                <tr><td colspan="5" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="server-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="server-modal-title">Add Server</span>
+      <button class="modal-close" onclick="closeModal('server-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="server-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Display Name <span>*</span></label>
+          <input class="form-control" id="server-name" type="text" placeholder="e.g., Prod App 01">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hostname</label>
+          <input class="form-control" id="server-hostname" type="text" placeholder="e.g., prod-app-01">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Environment</label>
+          <select class="form-control" id="server-environment">
+            <option value="production">production</option>
+            <option value="staging">staging</option>
+            <option value="development">development</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Owner</label>
+          <select class="form-control" id="server-owner">
+            <option value="">Unassigned</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="rotate-token-group" style="display:none">
+        <label class="form-label"><input type="checkbox" id="server-rotate-token"> Rotate agent token</label>
+        <div class="form-hint">Only rotate when you are ready to update the agent config on that server.</div>
+      </div>
+      <div class="form-group hidden" id="new-token-wrap">
+        <label class="form-label">Agent Token</label>
+        <textarea class="form-control" id="server-token" readonly style="min-height:72px"></textarea>
+        <div class="form-hint">Copy this once and place it in the agent config on the server.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('server-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveServer()">Save Server</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/patching.js"></script>
+</body>
+</html>

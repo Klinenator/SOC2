@@ -34,6 +34,16 @@ if ($method === 'POST') {
 if ($method === 'PUT') {
     if (!$id) error_response('Policy ID required');
     $body = get_body();
+    if (($body['status'] ?? '') === 'approved') {
+        $candidate = array_values(array_filter(read_json('policies.json'), fn($p) => $p['id'] === $id))[0] ?? [];
+        $candidate = array_merge($candidate, $body);
+        if (empty($candidate['owner']) || empty($candidate['reviewDate'])) {
+            error_response('An owner and review date are required before approval');
+        }
+        if (preg_match('/\\{\\{|_{4,}|AWS\\/Azure\\/GCP|headquartered in _/i', $candidate['content'] ?? '')) {
+            error_response('Resolve template placeholders before approval');
+        }
+    }
     $policies = read_json('policies.json');
     $allowed = ['name','description','category','status','content','version','owner','reviewDate'];
     $updated = false;

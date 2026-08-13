@@ -6,6 +6,7 @@
 uploads/*
 !uploads/.gitkeep
 data/evidence.json
+data/change_population.json
 
 # Secrets & reminder runtime state — never commit
 data/smtp.json

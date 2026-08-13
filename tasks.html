@@ -25,6 +25,8 @@
       </div>
     </header>
     <div class="content">
+      <div class="tabs" id="tasks-tabs"></div>
+
       <div class="toolbar">
         <div class="search-box">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -54,6 +56,7 @@
               <tr>
                 <th>Priority</th>
                 <th>Title</th>
+                <th id="th-team">Team</th>
                 <th>Control</th>
                 <th>Assignee</th>
                 <th>Due Date</th>
@@ -62,7 +65,7 @@
               </tr>
             </thead>
             <tbody id="tasks-tbody">
-              <tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+              <tr><td colspan="8" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -90,17 +93,25 @@
       </div>
       <div class="form-row">
         <div class="form-group">
+          <label class="form-label">Team <span>*</span></label>
+          <select class="form-control" id="task-category">
+            <option value="business">Business</option>
+            <option value="it">IT</option>
+            <option value="hr">HR</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assignee</label>
+          <input class="form-control" id="task-assignee" type="text" placeholder="Name or person">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label class="form-label">Linked Control</label>
           <select class="form-control" id="task-control">
             <option value="">None</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Assignee</label>
-          <input class="form-control" id="task-assignee" type="text" placeholder="Name or team">
-        </div>
-      </div>
-      <div class="form-row">
         <div class="form-group">
           <label class="form-label">Priority</label>
           <select class="form-control" id="task-priority">
@@ -109,6 +120,8 @@
             <option value="low">Low</option>
           </select>
         </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label class="form-label">Due Date</label>
           <input class="form-control" id="task-due" type="date">
