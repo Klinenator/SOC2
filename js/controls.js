@@ -43,9 +43,9 @@ function renderControls(controls = allControls) {
     <tr>
       <td><span class="td-mono">${escHtml(c.id)}</span></td>
       <td><span class="td-muted" style="font-size:12px">${escHtml(c.categoryName)}</span></td>
-      <td class="td-name" style="max-width:280px">
+      <td class="td-name" style="max-width:380px;white-space:normal">
         <span title="${escHtml(c.description)}">${escHtml(c.name)}</span>
-        ${c.notes ? `<div class="td-muted" style="font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px">${escHtml(c.notes)}</div>` : ''}
+        ${c.notes ? `<div class="td-muted" style="font-size:12px;line-height:1.45;margin-top:4px;white-space:normal;overflow-wrap:anywhere">${escHtml(c.notes)}</div>` : ''}
       </td>
       <td>${badge(c.status)}</td>
       <td class="td-muted">${escHtml(c.owner) || '—'}</td>
