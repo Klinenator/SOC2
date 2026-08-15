@@ -68,6 +68,29 @@ function write_json($file, $data) {
     }
 }
 
+// Next due date for a recurring obligation. Shared by the tasks API and the
+// CLI importers so a task closed by either advances the same way.
+function next_recurring_due($dueDate, $recurrence) {
+    if (!$dueDate) return '';
+    $intervals = [
+        'weekly'    => '+1 week',
+        'monthly'   => '+1 month',
+        'quarterly' => '+3 months',
+        'annual'    => '+1 year',
+    ];
+    if (!isset($intervals[$recurrence])) return '';
+
+    // Roll forward past any missed occurrences. Closing a task that slipped should
+    // schedule the next real one, not hand back another already-overdue date that
+    // has to be closed again to catch up.
+    $today = date('Y-m-d');
+    $next = date('Y-m-d', strtotime($dueDate . ' ' . $intervals[$recurrence]));
+    for ($guard = 0; $next < $today && $guard < 520; $guard++) {
+        $next = date('Y-m-d', strtotime($next . ' ' . $intervals[$recurrence]));
+    }
+    return $next;
+}
+
 function normalize_date($date) {
     if (!$date || !preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $date)) return '';
     return $date;

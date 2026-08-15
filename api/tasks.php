@@ -10,12 +10,6 @@ $category = $_GET['category'] ?? null;
 // Which team owns the work. Tasks predating categorization fall back to 'business'.
 const TASK_CATEGORIES = ['business', 'it', 'hr'];
 
-function next_recurring_due($dueDate, $recurrence) {
-    if (!$dueDate) return '';
-    $intervals = ['monthly' => '+1 month', 'quarterly' => '+3 months', 'annual' => '+1 year'];
-    return isset($intervals[$recurrence]) ? date('Y-m-d', strtotime($dueDate . ' ' . $intervals[$recurrence])) : '';
-}
-
 if ($method === 'GET') {
     $tasks = read_json('tasks.json');
     if ($controlId) {
@@ -46,7 +40,7 @@ if ($method === 'POST') {
         'category'  => in_array($body['category'] ?? '', TASK_CATEGORIES) ? $body['category'] : 'business',
         'assignee'  => $body['assignee'] ?? '',
         'ownerId'   => $body['ownerId'] ?? '',
-        'recurrence'=> in_array($body['recurrence'] ?? '', ['annual','quarterly','monthly','onEvent','once']) ? $body['recurrence'] : 'once',
+        'recurrence'=> in_array($body['recurrence'] ?? '', ['annual','quarterly','monthly','weekly','onEvent','once']) ? $body['recurrence'] : 'once',
         'reminders' => !empty($body['reminders']),
         'priority'  => in_array($body['priority'] ?? '', ['high','medium','low']) ? $body['priority'] : 'medium',
         'status'    => 'open',
@@ -82,7 +76,7 @@ if ($method === 'PUT') {
     }
     if (!$updated) error_response('Task not found', 404);
     $recurrence = $result['recurrence'] ?? 'once';
-    if ($wasOpen && ($result['status'] ?? '') === 'closed' && in_array($recurrence, ['monthly','quarterly','annual'], true)) {
+    if ($wasOpen && ($result['status'] ?? '') === 'closed' && in_array($recurrence, ['weekly','monthly','quarterly','annual'], true)) {
         $nextDue = next_recurring_due($result['dueDate'] ?? '', $recurrence);
         $exists = array_filter($tasks, fn($candidate) => ($candidate['seriesId'] ?? '') === ($result['seriesId'] ?? $result['id']) && ($candidate['status'] ?? '') === 'open');
         if ($nextDue && !$exists) {

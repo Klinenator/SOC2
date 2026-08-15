@@ -3,7 +3,7 @@
 let PEOPLE = [];
 let TASKS = [];
 
-const RECURRENCES = ['annual', 'quarterly', 'monthly', 'onEvent', 'once'];
+const RECURRENCES = ['annual', 'quarterly', 'monthly', 'weekly', 'onEvent', 'once'];
 
 function daysUntil(due) {
   if (!due) return null;

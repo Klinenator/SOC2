@@ -16,6 +16,7 @@ function rrule_for($recurrence) {
         case 'annual':    return 'RRULE:FREQ=YEARLY';
         case 'quarterly': return 'RRULE:FREQ=MONTHLY;INTERVAL=3';
         case 'monthly':   return 'RRULE:FREQ=MONTHLY';
+        case 'weekly':    return 'RRULE:FREQ=WEEKLY';
         default:          return null; // once / onEvent -> single event
     }
 }
