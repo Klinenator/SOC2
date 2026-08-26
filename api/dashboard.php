@@ -36,14 +36,38 @@ $overdueTasks = count(array_filter($tasks, function($t) {
     return $t['status'] === 'open' && !empty($t['dueDate']) && $t['dueDate'] < date('Y-m-d');
 }));
 
-// Upcoming due dates (next 30 days)
+// Per-team task counts. The dashboard scopes to one queue (IT / Business / HR) and the
+// totals have to move with it, or the header says "19 open" while the list below shows
+// eleven and the reader has to work out which number is lying.
+$taskCategories = [];
+foreach ($tasks as $t) {
+    $cat = $t['category'] ?? 'business';
+    if (!isset($taskCategories[$cat])) {
+        $taskCategories[$cat] = ['id' => $cat, 'total' => 0, 'open' => 0, 'overdue' => 0];
+    }
+    $taskCategories[$cat]['total']++;
+    if (($t['status'] ?? '') !== 'open') continue;
+    $taskCategories[$cat]['open']++;
+    if (!empty($t['dueDate']) && $t['dueDate'] < date('Y-m-d')) {
+        $taskCategories[$cat]['overdue']++;
+    }
+}
+
+// Outstanding work: anything open and already past due, plus the next 30 days.
+//
+// This used to require `$days >= 0`, so it showed only the future. With every open task
+// currently overdue that produced "No upcoming deadlines in the next 30 days" on a
+// dashboard with 24 outstanding items — the panel was most reassuring exactly when it
+// should have been loudest. Overdue tasks sort first because they are the ones to act on.
 $upcoming = array_values(array_filter($tasks, function($t) {
     if ($t['status'] !== 'open' || empty($t['dueDate'])) return false;
     $days = (strtotime($t['dueDate']) - time()) / 86400;
-    return $days >= 0 && $days <= 30;
+    return $days <= 30;
 }));
 usort($upcoming, fn($a, $b) => strcmp($a['dueDate'], $b['dueDate']));
-$upcoming = array_slice($upcoming, 0, 5);
+// Deliberately NOT sliced to the five the card shows. The client filters by category
+// first, and slicing here would hand it five business tasks and an empty IT view.
+$upcoming = array_slice($upcoming, 0, 40);
 
 // Policy summary
 $policyCounts = ['draft' => 0, 'under_review' => 0, 'approved' => 0];
@@ -76,10 +100,11 @@ json_response([
         'byCategory'  => array_values($categoryCounts),
     ],
     'tasks' => [
-        'total'    => count($tasks),
-        'open'     => $openTasks,
-        'overdue'  => $overdueTasks,
-        'upcoming' => $upcoming,
+        'total'      => count($tasks),
+        'open'       => $openTasks,
+        'overdue'    => $overdueTasks,
+        'upcoming'   => $upcoming,
+        'byCategory' => array_values($taskCategories),
     ],
     'evidence' => [
         'total' => count($evidence),

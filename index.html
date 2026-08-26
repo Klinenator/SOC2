@@ -80,7 +80,18 @@
         <div class="card">
           <div class="card-header">
             <span class="card-title">Upcoming Deadlines</span>
-            <a href="/tasks.html" class="btn btn-ghost btn-sm">View all</a>
+            <div style="display:flex;gap:8px;align-items:center">
+              <!-- Scope is remembered, because the person who only owns IT should not have
+                   to re-filter every visit to see their own queue. -->
+              <select class="filter-select" id="task-scope" onchange="setTaskScope(this.value)"
+                      title="Show only one team's outstanding work">
+                <option value="all">All teams</option>
+                <option value="it">IT only</option>
+                <option value="business">Business only</option>
+                <option value="hr">HR only</option>
+              </select>
+              <a href="/tasks.html" id="upcoming-view-all" class="btn btn-ghost btn-sm">View all</a>
+            </div>
           </div>
           <div class="card-body" id="upcoming-tasks">
             <div style="color:var(--text-secondary);text-align:center;padding:20px"><div class="spinner"></div></div>

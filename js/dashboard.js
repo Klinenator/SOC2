@@ -1,8 +1,48 @@
 let dashData = null;
 
+// Which team's outstanding work the task panels show. The portal mixes IT, Business and HR
+// queues, so landing on it means reading past two thirds of the list to find your own.
+// Remembered across visits; the rest of the dashboard stays global on purpose (see below).
+const TASK_SCOPES = { all: 'All teams', it: 'IT', business: 'Business', hr: 'HR' };
+let taskScope = 'all';
+
+function loadTaskScope() {
+  try {
+    const saved = localStorage.getItem('soc2.taskScope');
+    if (saved && TASK_SCOPES[saved]) taskScope = saved;
+  } catch (e) { /* private window or blocked storage — fall back to all */ }
+  const sel = document.getElementById('task-scope');
+  if (sel) sel.value = taskScope;
+}
+
+function setTaskScope(scope) {
+  taskScope = TASK_SCOPES[scope] ? scope : 'all';
+  try { localStorage.setItem('soc2.taskScope', taskScope); } catch (e) { /* not fatal */ }
+  // Keep the control in step. The onchange path sets it for us, but a programmatic call
+  // otherwise leaves the dropdown showing one scope while the panel shows another.
+  const sel = document.getElementById('task-scope');
+  if (sel && sel.value !== taskScope) sel.value = taskScope;
+  renderStats();
+  renderUpcomingTasks();
+}
+
+function scopedTasks() {
+  const all = (dashData?.tasks?.upcoming) || [];
+  return taskScope === 'all' ? all : all.filter(t => (t.category || 'business') === taskScope);
+}
+
+// Counts for the active scope, from the server's per-category tally.
+function scopedTaskCounts() {
+  const t = dashData?.tasks || {};
+  if (taskScope === 'all') return { open: t.open || 0, overdue: t.overdue || 0 };
+  const row = (t.byCategory || []).find(c => c.id === taskScope);
+  return { open: row?.open || 0, overdue: row?.overdue || 0 };
+}
+
 async function loadDashboard() {
   try {
     dashData = await api.get('/api/dashboard.php');
+    loadTaskScope();
     renderStats();
     renderScore();
     renderCategoryBars();
@@ -25,7 +65,12 @@ function renderStats() {
   const ev = d.evidence.requirements || { on_track: 0, stale: 0, missing: 0 };
   document.getElementById('stat-coverage').textContent    = `${inProg} in progress`;
   document.getElementById('stat-compliant-pct').textContent = `${d.readinessScore}% overall`;
-  document.getElementById('stat-open-tasks').textContent = `${d.tasks.open} open task${d.tasks.open !== 1 ? 's' : ''}`;
+  // Scoped, and says so. "11 open tasks" beside an IT-only list that shows eleven is
+  // readable; the global 19 beside the same list is not.
+  const st = scopedTaskCounts();
+  const suffix = taskScope === 'all' ? '' : ` · ${TASK_SCOPES[taskScope]}`;
+  document.getElementById('stat-open-tasks').textContent =
+    `${st.open} open task${st.open !== 1 ? 's' : ''}${suffix}`;
   document.getElementById('stat-policies').textContent   = `${ev.on_track} on track · ${ev.stale + ev.missing} need attention`;
 }
 
@@ -99,12 +144,17 @@ function renderStatusBreakdown() {
 }
 
 function renderUpcomingTasks() {
-  const tasks = dashData.tasks.upcoming;
+  // The server sends 40 days' worth unsliced so the scope filter has something to filter;
+  // the card still shows five.
+  const tasks = scopedTasks().slice(0, 5);
   const el = document.getElementById('upcoming-tasks');
+  const viewAll = document.getElementById('upcoming-view-all');
+  if (viewAll) viewAll.href = taskScope === 'all' ? '/tasks.html' : `/tasks.html#${taskScope}`;
   if (!tasks.length) {
+    const scopeNote = taskScope === 'all' ? '' : ` for ${TASK_SCOPES[taskScope]}`;
     el.innerHTML = `<div class="empty-state" style="padding:30px">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
-      <p>No upcoming deadlines in the next 30 days</p>
+      <p>No upcoming deadlines in the next 30 days${escHtml(scopeNote)}</p>
     </div>`;
     return;
   }
@@ -121,7 +171,13 @@ function renderUpcomingTasks() {
       </div>
     </li>`;
   }).join('')}</ul>
-  ${dashData.tasks.overdue > 0 ? `<div class="alert alert-warn" style="margin-top:14px;margin-bottom:0">${dashData.tasks.overdue} task${dashData.tasks.overdue>1?'s':''} overdue — <a href="/tasks.html">view tasks</a></div>` : ''}`;
+  ${(() => {
+    const st = scopedTaskCounts();
+    if (!st.overdue) return '';
+    const where = taskScope === 'all' ? '/tasks.html' : `/tasks.html#${taskScope}`;
+    const label = taskScope === 'all' ? '' : ` in ${TASK_SCOPES[taskScope]}`;
+    return `<div class="alert alert-warn" style="margin-top:14px;margin-bottom:0">${st.overdue} task${st.overdue>1?'s':''} overdue${escHtml(label)} — <a href="${where}">view tasks</a></div>`;
+  })()}`;
 }
 
 function renderEvidenceHealth() {
