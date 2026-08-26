@@ -341,7 +341,7 @@
     "dueDate": "2026-07-17",
     "createdAt": "2026-07-13",
     "ownerId": "skline",
-    "recurrence": "monthly",
+    "recurrence": "weekly",
     "reminders": true
   },
   {
