@@ -3,10 +3,20 @@
 .deploy_key.pub
 
 # Runtime data — keep structure, ignore contents
+#
+# These are written by the running portal and by scheduled exporters, so a tracked copy
+# has two sources of truth. On 2026-08-27 that stopped being theoretical: `git pull` on
+# the box refused to run because data/tasks.json held a CC7.3 closure made through the
+# UI minutes earlier, and data/patch_servers.json held a fresh fleet export. Accepting
+# either incoming version would have destroyed a server-stamped completedAt that exists
+# nowhere else.
 uploads/*
 !uploads/.gitkeep
 data/evidence.json
 data/change_population.json
+data/tasks.json
+data/patch_servers.json
+data/patch_jobs.json
 
 # Secrets & reminder runtime state — never commit
 data/smtp.json
