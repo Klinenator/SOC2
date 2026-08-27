@@ -64,9 +64,23 @@ function run(string $command): array {
 // A simulation only: `apt-get -s upgrade` resolves what WOULD be installed and changes
 // nothing. Security updates are identified by the origin of the candidate version rather
 // than by guessing from package names.
+// Reports are keyed by INSTANCE ID, not hostname.
+//
+// Hostname was the original key, and it made renaming a host silently destructive: the merge
+// matches records by key, so a renamed host looks like a brand new server. It gets a new id, a
+// new agent token, and a fresh row, while the old row lingers forever showing the patch state
+// as of the rename. Ten servers quietly become fifteen. Instance IDs do not change when a host
+// is renamed, rebooted, or moved to a different address, which is what a primary key needs.
 $probe = <<<'PROBE'
 h=$(hostname -s)
-p() { printf 'PATCH|%s|%s|%s\n' "$h" "$1" "$(printf '%s' "$2" | tr '\n' '~')"; }
+# Instance ID from IMDSv2, falling back to what cloud-init recorded. Both are on every host in
+# this fleet; the fallback matters if IMDS hop limits ever change.
+TOK=$(curl -s -X PUT -m 2 "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
+IID=$(curl -s -m 2 -H "X-aws-ec2-metadata-token: $TOK" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
+[ -n "$IID" ] || IID=$(cat /var/lib/cloud/data/instance-id 2>/dev/null | tr -d '\n')
+p() { printf 'PATCH|%s|%s|%s\n' "$IID" "$1" "$(printf '%s' "$2" | tr '\n' '~')"; }
+if [ -z "$IID" ]; then echo "PATCH-ERROR|$h|no instance id available" >&2; exit 1; fi
+p hostname "$h"
 p os "$(. /etc/os-release 2>/dev/null; echo "$PRETTY_NAME")"
 p reboot "$([ -f /var/run/reboot-required ] && echo yes || echo no)"
 p lastpatch "$(grep -h '^Start-Date:' /var/log/apt/history.log 2>/dev/null | tail -1 | cut -d' ' -f2-)"
@@ -92,12 +106,12 @@ foreach (explode("\n", $out) as $line) {
     if (!str_starts_with($line, 'PATCH|')) continue;
     $parts = explode('|', $line, 4);
     if (count($parts) < 4) continue;
-    [, $host, $key, $value] = $parts;
-    $hosts[$host][$key] = str_replace('~', "\n", $value);
+    [, $iid, $key, $value] = $parts;
+    $hosts[$iid][$key] = str_replace('~', "\n", $value);
 }
 
 $reports = [];
-foreach ($hosts as $host => $f) {
+foreach ($hosts as $iid => $f) {
     $updates = [];
     foreach (explode("\n", trim($f['updates'] ?? '')) as $row) {
         if ($row === '') continue;
@@ -112,8 +126,9 @@ foreach ($hosts as $host => $f) {
         ];
     }
     $held = array_values(array_filter(array_map('trim', explode(',', $f['held'] ?? ''))));
-    $reports[$host] = [
-        'hostname'          => $host,
+    $reports[$iid] = [
+        'instanceId'        => $iid,
+        'hostname'          => trim($f['hostname'] ?? $iid),
         'osVersion'         => trim($f['os'] ?? ''),
         'lastPatchAt'       => trim($f['lastpatch'] ?? ''),
         'rebootRequired'    => trim($f['reboot'] ?? 'no') === 'yes',
@@ -142,7 +157,8 @@ if ($ssmStatus === 0) {
         if (count($c) < 5) continue;
         [$instance, $installed, $missing, $failed, $endTime] = $c;
         $name = $windowsNames[$instance] ?? $instance;
-        $reports[$name] = [
+        $reports[$instance] = [
+            'instanceId'        => $instance,
             'hostname'          => $name,
             'osVersion'         => 'Windows (SSM Patch Manager)',
             'lastPatchAt'       => substr(str_replace('T', ' ', $endTime), 0, 19),
@@ -164,11 +180,11 @@ if ($ssmStatus === 0) {
 
 fwrite(STDOUT, sprintf("\n%-18s %-28s %8s %8s %-6s %s\n", 'HOST', 'OS', 'PENDING', 'SECURITY', 'REBOOT', 'LAST PATCH'));
 $totalSec = 0;
-foreach ($reports as $name => $r) {
+foreach ($reports as $r) {
     $sec = count(array_filter($r['updates'], fn($u) => $u['security']));
     $totalSec += $sec;
     fwrite(STDOUT, sprintf("%-18s %-28s %8d %8d %-6s %s\n",
-        $name, substr($r['osVersion'], 0, 28), count($r['updates']), $sec,
+        $r['hostname'], substr($r['osVersion'], 0, 28), count($r['updates']), $sec,
         $r['rebootRequired'] ? 'yes' : 'no', $r['lastPatchAt']));
 }
 fwrite(STDOUT, sprintf("\n%d host(s), %d pending security update(s) fleet-wide.\n", count($reports), $totalSec));
@@ -186,39 +202,57 @@ if (!$apply) {
 /* ---------------------------------------------------------------------- apply */
 
 // The merge runs ON the portal host, because patch_servers.json lives there and carries
-// per-server ids and agent tokens that must survive. Matching is by hostname; anything
-// already recorded keeps its id, token, display name, owner and environment.
+// per-server ids and agent tokens that must survive. Anything already recorded keeps its id,
+// token, display name, owner and environment.
+//
+// MATCHING IS BY INSTANCE ID, falling back to hostname for records written before instance ids
+// were stored. That fallback is a migration path, not a permanent second key: the first run
+// after this change adopts each existing row by hostname and stamps its instanceId, and every
+// run after that matches on the id alone. Without it, this change would itself have caused the
+// duplication it exists to prevent.
 $merge = <<<'MERGE'
 <?php
 $file = '/var/www/SOC2/data/patch_servers.json';
 $reports = json_decode(file_get_contents('php://stdin'), true);
 if (!is_array($reports)) { fwrite(STDERR, "bad payload\n"); exit(1); }
 $servers = file_exists($file) ? (json_decode(file_get_contents($file), true) ?: []) : [];
-$byHost = [];
-foreach ($servers as $i => $s) { $byHost[$s['hostname'] ?? ''] = $i; }
+$byInstance = []; $byHost = [];
+foreach ($servers as $i => $s) {
+    if (!empty($s['instanceId'])) $byInstance[$s['instanceId']] = $i;
+    if (!empty($s['hostname']))   $byHost[$s['hostname']] = $i;
+}
 $now = date('Y-m-d H:i:s');
-$created = 0; $updated = 0;
-foreach ($reports as $host => $r) {
+$created = 0; $updated = 0; $adopted = 0;
+foreach ($reports as $iid => $r) {
     $sec = count(array_filter($r['updates'], fn($u) => !empty($u['security'])));
-    if (isset($byHost[$host])) { $i = $byHost[$host]; $updated++; }
+    $host = $r['hostname'] ?? $iid;
+    if (isset($byInstance[$iid]))      { $i = $byInstance[$iid]; $updated++; }
+    elseif (isset($byHost[$host]))     { $i = $byHost[$host]; $updated++; $adopted++; }
     else {
-        // Friendly names on first creation only, matching the EC2 Name tags the rest of the
-        // estate uses. A later rename in the portal is preserved, because this branch only
-        // runs for a host that has no record yet.
+        // Friendly names on first creation only, matching the EC2 Name tags. Keyed by
+        // INSTANCE ID rather than hostname, so renaming a host cannot make this table miss
+        // and fall back to showing a bare hostname as the display name.
         $labels = [
-            'ip-172-31-39-152' => 'Schedule Server', 'ip-172-31-29-35' => 'SFTP Ubuntu',
-            'remote' => 'REMOTE', 'ip' => 'IP (web/mail)', 'ip-172-31-35-114' => 'idp',
-            'ip-192-168-26-18' => 'MARKETING', 'ip-172-31-47-20' => 'DIV-VPN',
-            'ip-172-31-20-191' => 'DIV-VPN2',
+            'i-027209a92fef460c6' => 'Schedule Server', 'i-075cabfc24d85df82' => 'SFTP Ubuntu',
+            'i-0ac0da3dfb312af1e' => 'REMOTE',          'i-0e972f01770aac678' => 'IP (web/mail)',
+            'i-0ff8b73d48efc7061' => 'idp',             'i-0c5b47cc5bafe51c7' => 'MARKETING',
+            'i-02a6aad02266aba15' => 'DIV-VPN',         'i-0226384292e496090' => 'DIV-VPN2',
+            'i-057dd0c8f8a8768c7' => 'SMB-Storage',     'i-02f0d04c7cfb5fd22' => 'QuickBooks',
         ];
         $servers[] = [
-            'id' => 'srv-' . substr(sha1($host), 0, 8),
-            'name' => $labels[$host] ?? $host, 'hostname' => $host,
+            // Derived from the instance id, so it survives a rename. A record keyed on a
+            // hostname hash would get a different id the moment the host was renamed.
+            'id' => 'srv-' . substr(sha1($iid), 0, 8),
+            'name' => $labels[$iid] ?? $host,
             'environment' => 'production', 'ownerId' => 'skline',
             'token' => bin2hex(random_bytes(16)),
         ];
         $i = array_key_last($servers); $created++;
     }
+    // Stamped on every pass, not just at creation: this is what adopts pre-instanceId records
+    // onto the stable key, and what lets the portal show a new hostname after a rename.
+    $servers[$i]['instanceId'] = $iid;
+    $servers[$i]['hostname'] = $host;
     $servers[$i]['status'] = 'ok';
     $servers[$i]['lastCheckIn'] = $now;
     $servers[$i]['lastPatchAt'] = $r['lastPatchAt'];
@@ -239,7 +273,7 @@ file_put_contents($tmp, json_encode($servers, JSON_PRETTY_PRINT | JSON_UNESCAPED
 // is not web-readable either way, but a world-readable secret is a world-readable secret.
 chmod($tmp, 0640); chown($tmp, 'www-data'); chgrp($tmp, 'www-data');
 rename($tmp, $file);
-fwrite(STDOUT, "merged: $updated updated, $created created, " . count($servers) . " total\n");
+fwrite(STDOUT, "merged: $updated updated ($adopted adopted onto instanceId), $created created, " . count($servers) . " total\n");
 MERGE;
 
 $payload = base64_encode(json_encode($reports));
