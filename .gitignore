@@ -25,3 +25,9 @@ data/reminder_log.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Written in place by api/evidence_store.php when evidence is linked to a control or an
+# audit test, so a tracked copy is a second source of truth that conflicts with the live one
+# on every pull. Untracked 2026-08-27 for the same reason as tasks.json.
+data/controls.json
+data/audit_tests.json
