@@ -48,8 +48,33 @@ else
 fi
 
 echo "==> Setting permissions..."
+# Code first, and this is not optional.
+#
+# `git pull` writes the files it touches with the pulling user's ownership and umask, which
+# here means ubuntu:ubuntu 660. nginx and php-fpm run as www-data, so every file the pull
+# updated becomes unreadable to them. On 2026-08-27 that took the portal down completely:
+# static assets returned 403, and php-fpm could not open api/auth.php, so the auth_request
+# subrequest returned 500 and every page with it.
+#
+#   Failed opening required '/var/www/SOC2/api/auth.php'
+#   auth request unexpected status: 500
+#
+# The convention is ubuntu:www-data for code — owned by the deploying user, readable by the
+# group the web server runs as — so restore it on every deploy rather than hoping a pull
+# happened to leave it alone.
+sudo chown -R ubuntu:www-data "$DIR"
+sudo find "$DIR" -path "$DIR/.git" -prune -o -type f -print0 | sudo xargs -0 chmod 0640
+sudo find "$DIR" -path "$DIR/.git" -prune -o -type d -print0 | sudo xargs -0 chmod 0750
+sudo chown -R ubuntu:ubuntu "$DIR/.git"
+
+# Runtime data and uploads are WRITTEN by the app, so they belong to www-data outright.
 sudo chown -R www-data:www-data "$DIR/data" "$DIR/uploads"
-sudo chmod 775 "$DIR/data" "$DIR/uploads"
+sudo chmod 0770 "$DIR/data" "$DIR/uploads"
+sudo find "$DIR/data" -type f -print0 | sudo xargs -0 chmod 0640
+# tasks.json and patch_jobs.json are rewritten in place by the API, so they need group write.
+for f in tasks.json patch_jobs.json; do
+  [ -e "$DIR/data/$f" ] && sudo chmod 0660 "$DIR/data/$f"
+done
 
 echo "==> Installing nginx config..."
 sudo cp "$DIR/nginx.conf" /etc/nginx/sites-available/soc2
