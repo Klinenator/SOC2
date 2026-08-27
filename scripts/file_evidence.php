@@ -91,12 +91,29 @@ require_once __DIR__ . '/../api/evidence_store.php';
  * Refuse to run somewhere the write cannot land, and say which of the two reasons it is.
  * "Nothing happened" is how data/evidence.json stayed absent for months.
  */
+/**
+ * The EFFECTIVE user, which is the only one that matters for whether a write lands.
+ *
+ * Not get_current_user(): that returns the owner of the script FILE, so running this under
+ * `sudo -u www-data` printed "running as: ubuntu" -- reassuring, wrong, and wrong in the
+ * dangerous direction too, since running it as root would also have reported ubuntu.
+ */
+function effective_user(): string
+{
+    if (function_exists('posix_geteuid')) {
+        $pw = posix_getpwuid(posix_geteuid());
+        if (is_array($pw) && !empty($pw['name'])) return (string)$pw['name'];
+    }
+    $who = trim((string)shell_exec('id -un 2>/dev/null'));
+    return $who !== '' ? $who : 'unknown';
+}
+
 function preflight(bool $apply): void
 {
-    $user = get_current_user() ?: (string)(posix_getpwuid(posix_geteuid())['name'] ?? 'unknown');
+    $user = effective_user();
     fwrite(STDOUT, "running as   : $user\n");
-    fwrite(STDOUT, "data dir     : " . DATA_DIR . "\n");
-    fwrite(STDOUT, "uploads dir  : " . UPLOADS_DIR . "\n");
+    fwrite(STDOUT, "data dir     : " . (realpath(DATA_DIR) ?: DATA_DIR) . "\n");
+    fwrite(STDOUT, "uploads dir  : " . (realpath(UPLOADS_DIR) ?: UPLOADS_DIR) . "\n");
 
     foreach ([DATA_DIR => 'data', UPLOADS_DIR => 'uploads'] as $dir => $label) {
         if (!is_dir($dir)) {

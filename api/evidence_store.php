@@ -164,7 +164,15 @@ function evidence_create(array $input): array
     }
 
     if (!is_dir(UPLOADS_DIR) || !is_writable(UPLOADS_DIR)) {
-        throw new EvidenceStoreError('uploads directory is not writable by ' . (get_current_user() ?: 'this user'), 500);
+        // The EFFECTIVE user, not get_current_user() -- that reports the owner of the script
+        // file, which under `sudo -u www-data` names the wrong account and makes a permission
+        // error point at the wrong place.
+        $who = 'this user';
+        if (function_exists('posix_geteuid')) {
+            $pw = posix_getpwuid(posix_geteuid());
+            if (is_array($pw) && !empty($pw['name'])) $who = (string)$pw['name'];
+        }
+        throw new EvidenceStoreError("uploads directory is not writable by $who", 500);
     }
 
     $placed = !empty($input['isUpload'])
