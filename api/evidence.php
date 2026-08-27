@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/evidence_store.php';
 cors();
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -28,71 +29,40 @@ if ($method === 'GET') {
     json_response($evidence);
 }
 
+// ---------------------------------------------------------------------------------------
+// FILING EVIDENCE. There are exactly two ways, and both run the same code:
+//
+//   1. A person, from a browser: POST multipart/form-data here. This branch.
+//   2. A script, on the portal host: scripts/file_evidence.php
+//
+// Both call evidence_create() in api/evidence_store.php, which is the ONLY place that
+// validates an artifact, writes it to uploads/, appends to evidence.json, and links the
+// record into controls.json / audit_tests.json. If you are adding a third way, add another
+// caller of evidence_create() -- do not reimplement the sequence, and do not add an
+// authentication bypass to reach this endpoint. Recurring evidence comes from scripts, which
+// is what path 2 is for.
+// ---------------------------------------------------------------------------------------
 if ($method === 'POST') {
-    // Multipart file upload
-    if (empty($_FILES['file'])) error_response('No file uploaded');
+    if (empty($_FILES['file'])) {
+        error_response('No file uploaded. Scripts should use scripts/file_evidence.php on the portal host instead of posting here.');
+    }
     $file = $_FILES['file'];
     if ($file['error'] !== UPLOAD_ERR_OK) error_response('Upload error: ' . $file['error']);
 
-    $maxSize = 50 * 1024 * 1024; // 50MB
-    if ($file['size'] > $maxSize) error_response('File too large (max 50MB)');
-
-    $allowedTypes = ['application/pdf','image/png','image/jpeg','image/gif',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain','text/csv','application/zip'];
-    $mime = mime_content_type($file['tmp_name']);
-    if (!in_array($mime, $allowedTypes)) error_response('File type not allowed');
-
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $storedName = uuid() . '.' . strtolower($ext);
-    $dest = UPLOADS_DIR . $storedName;
-    if (!move_uploaded_file($file['tmp_name'], $dest)) error_response('Failed to save file');
-
-    $controlIds = [];
-    if (!empty($_POST['controlIds'])) {
-        $controlIds = json_decode($_POST['controlIds'], true) ?? [];
-    }
-    $auditTestIds = !empty($_POST['auditTestIds']) ? (json_decode($_POST['auditTestIds'], true) ?? []) : [];
-
-    $record = [
-        'id'          => uuid(),
-        'filename'    => $file['name'],
-        'storedName'  => $storedName,
-        'size'        => $file['size'],
-        'mimeType'    => $mime,
-        'description' => $_POST['description'] ?? '',
-        'source'      => $_POST['source'] ?? '',
-        'owner'       => $_POST['owner'] ?? '',
-        'evidenceDate'=> $_POST['evidenceDate'] ?? '',
-        'controlIds'  => $controlIds,
-        'auditTestIds'=> $auditTestIds,
-        'uploadedAt'  => date('Y-m-d H:i:s'),
-    ];
-
-    $evidence = read_json('evidence.json');
-    $evidence[] = $record;
-    write_json('evidence.json', $evidence);
-
-    // Link evidence ID back to each control
-    if ($controlIds) {
-        $controls = read_json('controls.json');
-        foreach ($controls as &$c) {
-            if (in_array($c['id'], $controlIds)) {
-                $c['evidenceIds'][] = $record['id'];
-                $c['evidenceIds'] = array_unique($c['evidenceIds']);
-            }
-        }
-        write_json('controls.json', array_values($controls));
-    }
-    if ($auditTestIds) {
-        $tests = read_json('audit_tests.json');
-        foreach ($tests as &$test) if (in_array($test['id'], $auditTestIds, true)) {
-            $test['evidenceIds'][] = $record['id'];
-            $test['evidenceIds'] = array_values(array_unique($test['evidenceIds']));
-            if (($test['status'] ?? '') === 'not_started') $test['status'] = 'in_progress';
-        }
-        write_json('audit_tests.json', $tests);
+    try {
+        $record = evidence_create([
+            'sourcePath'   => $file['tmp_name'],
+            'originalName' => $file['name'],
+            'isUpload'     => true,
+            'description'  => $_POST['description'] ?? '',
+            'source'       => $_POST['source'] ?? '',
+            'owner'        => $_POST['owner'] ?? '',
+            'evidenceDate' => $_POST['evidenceDate'] ?? '',
+            'controlIds'   => !empty($_POST['controlIds']) ? (json_decode($_POST['controlIds'], true) ?? []) : [],
+            'auditTestIds' => !empty($_POST['auditTestIds']) ? (json_decode($_POST['auditTestIds'], true) ?? []) : [],
+        ]);
+    } catch (EvidenceStoreError $e) {
+        error_response($e->getMessage(), $e->status());
     }
 
     json_response($record, 201);
@@ -123,32 +93,21 @@ if ($method === 'PUT') {
     if (!$updated) error_response('Evidence not found', 404);
     write_json('evidence.json', $evidence);
 
-    // Re-sync control links
+    // Re-sync links through the same helper the create path uses, so all three operations
+    // (create, re-link, delete) agree on the shape they write. This branch previously did its
+    // own array_unique without array_values, which turns evidenceIds into a JSON object as
+    // soon as a duplicate is dropped.
     if (isset($body['controlIds']) && $old) {
-        $controls = read_json('controls.json');
         $oldIds = $old['controlIds'] ?? [];
         $newIds = $body['controlIds'];
-        foreach ($controls as &$c) {
-            $was = in_array($c['id'], $oldIds);
-            $now = in_array($c['id'], $newIds);
-            if ($was && !$now) {
-                $c['evidenceIds'] = array_values(array_filter($c['evidenceIds'], fn($eid) => $eid !== $id));
-            } elseif (!$was && $now) {
-                $c['evidenceIds'][] = $id;
-                $c['evidenceIds'] = array_unique($c['evidenceIds']);
-            }
-        }
-        write_json('controls.json', array_values($controls));
+        evidence_link('controls.json', array_values(array_diff($oldIds, $newIds)), $id, false);
+        evidence_link('controls.json', array_values(array_diff($newIds, $oldIds)), $id, true);
     }
     if (isset($body['auditTestIds']) && $old) {
-        $tests = read_json('audit_tests.json');
-        $oldIds = $old['auditTestIds'] ?? []; $newIds = $body['auditTestIds'];
-        foreach ($tests as &$test) {
-            $was = in_array($test['id'], $oldIds, true); $now = in_array($test['id'], $newIds, true);
-            if ($was && !$now) $test['evidenceIds'] = array_values(array_filter($test['evidenceIds'] ?? [], fn($eid) => $eid !== $id));
-            elseif (!$was && $now) { $test['evidenceIds'][] = $id; $test['evidenceIds'] = array_values(array_unique($test['evidenceIds'])); }
-        }
-        write_json('audit_tests.json', $tests);
+        $oldIds = $old['auditTestIds'] ?? [];
+        $newIds = $body['auditTestIds'];
+        evidence_link('audit_tests.json', array_values(array_diff($oldIds, $newIds)), $id, false);
+        evidence_link('audit_tests.json', array_values(array_diff($newIds, $oldIds)), $id, true, true);
     }
 
     json_response($result);
