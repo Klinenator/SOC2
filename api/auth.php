@@ -5,7 +5,51 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_TOKENINFO_URL = 'https://oauth2.googleapis.com/tokeninfo';
 
-function auth_env($name, $default = '') { $value = $_SERVER[$name] ?? getenv($name); return trim((string)(($value === false || $value === '') ? $default : $value)); }
+/**
+ * OAuth client credentials from the host's own PHP config.
+ *
+ * The portal runs on the mail/web box, which already holds a Google OAuth client as
+ * $clientID / $clientSecret in /var/lib/php/config.php — a file that is 0640 root:www-data
+ * and readable by php-fpm. Without this, the only way those values reached auth.php was
+ * nginx injecting them as fastcgi_params from /etc/soc2/soc2-secrets.conf: a second copy of
+ * credentials the box already had, in a file that had never been created, which is why the
+ * portal shipped with no authentication at all.
+ *
+ * Safe to include: config.php DEFINES connect() and rds_connect() rather than calling them,
+ * so no database connection is opened here. include_once, so a file already loaded this
+ * request cannot fatal on redeclaration.
+ *
+ * Included inside a closure ON PURPOSE, and the trade-off is worth knowing. Scoping it means
+ * $DB_USER / $DB_PASS stay local and are discarded rather than landing in auth.php's globals
+ * — an authentication endpoint has no business holding database credentials. The cost is
+ * that config.php's connect() reads `global $DB_HOST, $DB_PASS, $DB_USER`, and PHP declares
+ * functions globally even from a function-scoped include, so connect() would exist here with
+ * its globals unset. Nothing in the auth path calls it. DO NOT call connect() or
+ * rds_connect() from auth.php — include config.php at global scope if that ever becomes
+ * necessary, and accept the credentials in scope.
+ */
+function auth_host_config() {
+    static $map = null;
+    if ($map !== null) return $map;
+    $map = [];
+    $paths = array_filter([getenv('SOC2_PHP_CONFIG') ?: null, '/var/lib/php/config.php', '/var/lib/php-fpm/config.php']);
+    foreach ($paths as $path) {
+        if (!is_readable($path)) continue;
+        $vars = (static function ($soc2_config_path) { include_once $soc2_config_path; return get_defined_vars(); })($path);
+        if (!empty($vars['clientID']))     $map['SOC2_GOOGLE_CLIENT_ID']     = $vars['clientID'];
+        if (!empty($vars['clientSecret'])) $map['SOC2_GOOGLE_CLIENT_SECRET'] = $vars['clientSecret'];
+        if ($map) break;
+    }
+    return $map;
+}
+
+// $_SERVER first so an explicit fastcgi_param still wins, then the environment, then the
+// host config. Precedence order means nothing that relies on the documented mechanism breaks.
+function auth_env($name, $default = '') {
+    $value = $_SERVER[$name] ?? getenv($name);
+    if ($value === false || $value === '') $value = auth_host_config()[$name] ?? '';
+    return trim((string)(($value === false || $value === '') ? $default : $value));
+}
 function auth_session_start() {
     if (session_status() === PHP_SESSION_ACTIVE) return;
     session_name(auth_env('SOC2_SESSION_NAME', 'soc2_admin'));
